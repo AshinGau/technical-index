@@ -1,0 +1,11 @@
+# Production dependencies
+# Add your production dependencies here
+
+requests>=2.32
+binance-futures-connector>=4.1
+# pandas-ta need numpy <= 1.26.4
+numpy<=1.26.4
+pandas>=2.2
+pandas-ta==0.3.14b0
+# TA-Lib for candlestick patterns and advanced technical analysis
+TA-Lib>=0.4.28
