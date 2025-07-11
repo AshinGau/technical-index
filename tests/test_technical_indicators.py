@@ -4,26 +4,23 @@
 测试各种技术指标的计算是否正确
 """
 
-import unittest
-import pandas as pd
-import numpy as np
-import sys
 import os
-from technical_index.index import (
-    build_quantitative_analysis,
-    calculate_momentum_indicators,
-    calculate_overlap_indicators,
-    calculate_trend_indicators,
-    calculate_volatility_indicators,
-    calculate_volume_indicators,
-    calculate_statistics_indicators,
-    calculate_candlestick_patterns,
-    get_available_indicators,
-    build_indicator_parameters,
-)
+import sys
+import unittest
 
-# 添加项目根目录到路径
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import numpy as np
+import pandas as pd
+
+from technical_index.index import (build_indicator_parameters,
+                                   build_quantitative_analysis,
+                                   calculate_candlestick_patterns,
+                                   calculate_momentum_indicators,
+                                   calculate_overlap_indicators,
+                                   calculate_statistics_indicators,
+                                   calculate_trend_indicators,
+                                   calculate_volatility_indicators,
+                                   calculate_volume_indicators,
+                                   get_available_indicators)
 
 
 class TestTechnicalIndicators(unittest.TestCase):
@@ -114,7 +111,12 @@ class TestTechnicalIndicators(unittest.TestCase):
         result = calculate_momentum_indicators(self.df.copy())
 
         # 检查是否添加了动量指标
-        momentum_indicators = ["RSI_14", "MACD_12_26_9", "STOCHk_14_3_3", "STOCHd_14_3_3"]
+        momentum_indicators = [
+            "RSI_14",
+            "MACD_12_26_9",
+            "STOCHk_14_3_3",
+            "STOCHd_14_3_3",
+        ]
         for indicator in momentum_indicators:
             if indicator in result.columns:
                 self.assertIn(indicator, result.columns)

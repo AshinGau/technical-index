@@ -24,12 +24,16 @@ pip install -e ".[dev]"
 echo "Running tests..."
 pytest
 
-# Run linting
-echo "Running linting..."
-flake8 .
-
 # Format code
 echo "Formatting code..."
 black .
+
+# Sort imports
+echo "Sorting imports..."
+isort .
+
+# Run linting
+echo "Running linting..."
+flake8 .
 
 echo "Build completed successfully!"

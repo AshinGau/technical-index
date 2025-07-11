@@ -5,8 +5,9 @@
 
 import logging
 import sys
-import requests
+
 import pandas as pd
+import requests
 
 # 配置日志记录器
 logger = logging.getLogger(__name__)

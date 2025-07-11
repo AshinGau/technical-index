@@ -4,24 +4,21 @@
 展示如何使用technical_index模块计算各种技术指标
 """
 
-import sys
 import os
-import pandas as pd
-import numpy as np
+import sys
 import warnings
-from technical_index.index import (
-    build_quantitative_analysis,
-    get_available_indicators,
-    build_indicator_parameters,
-)
+
+import numpy as np
+import pandas as pd
+
 from technical_index.binance import get_futures_market_data
+from technical_index.index import (build_indicator_parameters,
+                                   build_quantitative_analysis,
+                                   get_available_indicators)
 
 # 过滤pandas警告
 warnings.filterwarnings("ignore", category=pd.errors.SettingWithCopyWarning)
 warnings.filterwarnings("ignore", category=FutureWarning)
-
-# 添加项目根目录到路径
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 def get_ethusdt_data():

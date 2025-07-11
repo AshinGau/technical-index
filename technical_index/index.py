@@ -5,9 +5,10 @@
 """
 
 import logging
+import warnings
+
 import pandas as pd
 import pandas_ta as ta
-import warnings
 
 # 过滤pandas警告
 warnings.filterwarnings("ignore", category=pd.errors.SettingWithCopyWarning)
@@ -179,7 +180,10 @@ def calculate_overlap_indicators(df, **kwargs):
     ichimoku_kijun = kwargs.get("ichimoku_kijun", 26)
     ichimoku_senkou = kwargs.get("ichimoku_senkou", 52)
     df.ta.ichimoku(
-        tenkan=ichimoku_tenkan, kijun=ichimoku_kijun, senkou=ichimoku_senkou, append=True
+        tenkan=ichimoku_tenkan,
+        kijun=ichimoku_kijun,
+        senkou=ichimoku_senkou,
+        append=True,
     )
 
     # SuperTrend - 趋势跟踪指标
