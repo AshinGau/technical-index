@@ -9,10 +9,6 @@ import pandas as pd
 import numpy as np
 import sys
 import os
-
-# 添加项目根目录到路径
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 from technical_index.index import (
     build_quantitative_analysis,
     calculate_momentum_indicators,
@@ -25,6 +21,9 @@ from technical_index.index import (
     get_available_indicators,
     build_indicator_parameters,
 )
+
+# 添加项目根目录到路径
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 class TestTechnicalIndicators(unittest.TestCase):
@@ -282,7 +281,7 @@ class TestTechnicalIndicators(unittest.TestCase):
         import time
 
         start_time = time.time()
-        result = build_quantitative_analysis(self.df)
+        build_quantitative_analysis(self.df)
         end_time = time.time()
 
         calculation_time = end_time - start_time

@@ -9,3 +9,4 @@ pandas>=2.2
 pandas-ta==0.3.14b0
 # TA-Lib for candlestick patterns and advanced technical analysis
 TA-Lib>=0.4.28
+mplfinance>=0.12.10b0

@@ -7,12 +7,11 @@
 import logging
 import pandas as pd
 import pandas_ta as ta
-import numpy as np
 import warnings
 
 # 过滤pandas警告
-warnings.filterwarnings('ignore', category=pd.errors.SettingWithCopyWarning)
-warnings.filterwarnings('ignore', category=FutureWarning)
+warnings.filterwarnings("ignore", category=pd.errors.SettingWithCopyWarning)
+warnings.filterwarnings("ignore", category=FutureWarning)
 
 # 配置日志
 logging.basicConfig(level=logging.INFO)

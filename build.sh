@@ -26,7 +26,7 @@ pytest
 
 # Run linting
 echo "Running linting..."
-flake8 . --exclude=venv,__pycache__,.git
+flake8 .
 
 # Format code
 echo "Formatting code..."

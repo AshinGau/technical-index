@@ -9,20 +9,19 @@ import os
 import pandas as pd
 import numpy as np
 import warnings
-
-# 过滤pandas警告
-warnings.filterwarnings('ignore', category=pd.errors.SettingWithCopyWarning)
-warnings.filterwarnings('ignore', category=FutureWarning)
-
-# 添加项目根目录到路径
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 from technical_index.index import (
     build_quantitative_analysis,
     get_available_indicators,
     build_indicator_parameters,
 )
 from technical_index.binance import get_futures_market_data
+
+# 过滤pandas警告
+warnings.filterwarnings("ignore", category=pd.errors.SettingWithCopyWarning)
+warnings.filterwarnings("ignore", category=FutureWarning)
+
+# 添加项目根目录到路径
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 def get_ethusdt_data():
@@ -140,7 +139,7 @@ def demonstrate_custom_parameters():
 
     # 构建最终参数（用户参数覆盖默认参数）
     final_params = build_indicator_parameters(**custom_params)
-    print(f"\n最终参数示例:")
+    print("\n最终参数示例:")
     print(f"  移动平均线周期: {final_params['ma_periods']}")
     print(f"  RSI周期: {final_params['rsi_length']}")
     print(f"  MACD快线周期: {final_params['macd_fast']}")
@@ -196,7 +195,7 @@ def main():
     print("=" * 50)
 
     # 1. 基本使用示例
-    df_with_indicators = demonstrate_basic_usage()
+    demonstrate_basic_usage()
 
     # 2. 自定义参数示例
     demonstrate_custom_parameters()
