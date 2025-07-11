@@ -4,9 +4,6 @@ PlotConfig 配置示例
 展示如何使用 PlotConfig 类来配置技术指标图表
 """
 
-import os
-import sys
-
 from technical_index.binance import get_futures_market_data
 from technical_index.index import (build_indicator_parameters,
                                    build_quantitative_analysis)

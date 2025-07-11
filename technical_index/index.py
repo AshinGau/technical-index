@@ -49,7 +49,6 @@ def calculate_momentum_indicators(df, **kwargs):
     """
     计算动量指标 - 用于衡量价格变化的速度和强度
     """
-    logger.info("计算动量指标...")
 
     # MACD (移动平均收敛发散) - 趋势跟踪动量指标
     # 用途：识别趋势变化、买卖信号
@@ -130,7 +129,6 @@ def calculate_overlap_indicators(df, **kwargs):
     """
     计算重叠指标 - 移动平均线和价格重叠指标
     """
-    logger.info("计算重叠指标...")
 
     # 获取ma_periods参数，默认为(7, 25, 99)
     ma_periods = kwargs.get("ma_periods", (7, 25, 99))
@@ -199,7 +197,6 @@ def calculate_trend_indicators(df, **kwargs):
     """
     计算趋势指标 - 用于识别和确认趋势方向
     """
-    logger.info("计算趋势指标...")
 
     # ADX (平均方向指数) - 趋势强度指标
     # 用途：衡量趋势强度，判断是否适合趋势交易
@@ -245,7 +242,6 @@ def calculate_volatility_indicators(df, **kwargs):
     """
     计算波动率指标 - 用于衡量价格波动程度
     """
-    logger.info("计算波动率指标...")
 
     # Bollinger Bands (布林带) - 波动率通道
     # 用途：识别超买超卖，判断波动率
@@ -291,7 +287,6 @@ def calculate_volume_indicators(df, **kwargs):
     """
     计算成交量指标 - 用于分析成交量与价格的关系
     """
-    logger.info("计算成交量指标...")
 
     # OBV (能量潮) - 成交量累积指标
     # 用途：确认价格趋势，识别背离
@@ -341,7 +336,6 @@ def calculate_statistics_indicators(df, **kwargs):
     """
     计算统计指标 - 用于价格数据的统计分析
     """
-    logger.info("计算统计指标...")
 
     # Z-Score - 标准化分数
     # 用途：判断价格偏离程度
@@ -385,7 +379,6 @@ def calculate_candlestick_patterns(df, **kwargs):
     """
     计算K线形态 - 用于识别经典的K线形态
     """
-    logger.info("计算K线形态...")
 
     # 计算所有K线形态
     # 用途：识别经典的反转和持续形态

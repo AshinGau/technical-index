@@ -4,9 +4,6 @@
 演示如何使用 plot_candlestick_with_indicators 函数和 PlotConfig 配置对象
 """
 
-import os
-import sys
-
 from technical_index.binance import get_futures_market_data
 from technical_index.index import (build_indicator_parameters,
                                    build_quantitative_analysis)

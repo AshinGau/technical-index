@@ -4,8 +4,6 @@
 展示如何使用technical_index模块计算各种技术指标
 """
 
-import os
-import sys
 import warnings
 
 import numpy as np

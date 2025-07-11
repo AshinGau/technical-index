@@ -5,7 +5,7 @@
 
 import logging
 import warnings
-from typing import Any, Dict, List, Optional
+from typing import Optional
 
 import mplfinance as mpf  # 引入绘图库
 import pandas as pd

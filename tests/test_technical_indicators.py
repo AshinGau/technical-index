@@ -4,8 +4,6 @@
 测试各种技术指标的计算是否正确
 """
 
-import os
-import sys
 import unittest
 
 import numpy as np
