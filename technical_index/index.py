@@ -450,20 +450,19 @@ def get_available_indicators():
     }
 
 
-def build_indicator_parameters(ma_periods=(7, 25, 99), **kwargs):
+def build_indicator_parameters(**kwargs):
     """
     根据用户自定义参数构建技术指标参数字典
 
     Args:
-        ma_periods: 移动平均线周期列表
-        **kwargs: 其他技术指标参数
+        **kwargs: 技术指标参数
 
     Returns:
         dict: 技术指标参数字典，包含所有可配置的参数及其默认值
     """
     params = {
         # 移动平均线周期参数
-        "ma_periods": ma_periods,  # 移动平均线周期列表，用于计算SMA和EMA
+        "ma_periods": (7, 25, 99),  # 移动平均线周期列表，用于计算SMA和EMA
         # MACD参数
         "macd_fast": 12,  # MACD快线周期，通常为12
         "macd_slow": 26,  # MACD慢线周期，通常为26

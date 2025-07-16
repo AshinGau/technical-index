@@ -1,0 +1,104 @@
+{
+  "monitor": {
+    "symbols": [
+      "BTCUSDT",
+      "ETHUSDT"
+    ],
+    "interval": "1h",
+    "check_interval_minutes": 15,
+    "enabled": true,
+    "log_level": "INFO",
+    "save_signals": true,
+    "signal_file": "log/signals.json"
+  },
+  "symbols": [
+    {
+      "symbol": "BTCUSDT",
+      "interval": "1h",
+      "rules": [
+        {
+          "name": "价格波动监控",
+          "rule_type": "price_based",
+          "enabled": true,
+          "parameters": {
+            "volatility_threshold": 0.03
+          }
+        },
+        {
+          "name": "价格突破监控",
+          "rule_type": "price_based",
+          "enabled": true,
+          "parameters": {}
+        },
+        {
+          "name": "MACD金叉死叉",
+          "rule_type": "technical",
+          "enabled": true,
+          "parameters": {}
+        },
+        {
+          "name": "RSI超买超卖",
+          "rule_type": "technical",
+          "enabled": true,
+          "parameters": {}
+        },
+        {
+          "name": "趋势分析",
+          "rule_type": "technical",
+          "enabled": true,
+          "parameters": {}
+        }
+      ],
+      "callback_module": null,
+      "callback_function": null
+    },
+    {
+      "symbol": "ETHUSDT",
+      "interval": "1h",
+      "rules": [
+        {
+          "name": "价格波动监控",
+          "rule_type": "price_based",
+          "enabled": true,
+          "parameters": {
+            "volatility_threshold": 0.03
+          }
+        },
+        {
+          "name": "价格突破监控",
+          "rule_type": "price_based",
+          "enabled": true,
+          "parameters": {}
+        },
+        {
+          "name": "MACD金叉死叉",
+          "rule_type": "technical",
+          "enabled": true,
+          "parameters": {}
+        },
+        {
+          "name": "RSI超买超卖",
+          "rule_type": "technical",
+          "enabled": true,
+          "parameters": {}
+        },
+        {
+          "name": "趋势分析",
+          "rule_type": "technical",
+          "enabled": true,
+          "parameters": {}
+        }
+      ],
+      "callback_module": null,
+      "callback_function": null
+    },
+    {
+      "symbol": "ADAUSDT",
+      "interval": "15m",
+      "rules": [],
+      "callback_module": null,
+      "callback_function": null
+    }
+  ],
+  "global_rules": []
+}

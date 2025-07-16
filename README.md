@@ -7,7 +7,7 @@
 ### 1. 克隆项目并安装依赖
 
 ```bash
-git clone <仓库地址>
+git clone https://github.com/AshinGau/technical-index.git
 cd technical-index
 pip install -e .
 ```
@@ -56,20 +56,6 @@ pip install -r requirements.txt
 如遇到 `ta-lib` 相关编译或找不到头文件等问题，请先确保系统已正确安装 ta-lib C 库。
 
 ---
-
-## 用法示例
-
-运行主程序：
-
-```bash
-python main.py
-```
-
-或安装后直接运行：
-
-```bash
-technical-index
-```
 
 ## 示例代码
 

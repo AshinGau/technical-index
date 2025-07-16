@@ -167,3 +167,7 @@ cython_debug/
 # OS
 .DS_Store
 Thumbs.db
+
+# Logs and signals
+log/
+*.log
