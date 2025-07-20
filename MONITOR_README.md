@@ -14,14 +14,14 @@
 ### 📊 监控规则类型
 
 #### 价格变化规则
-- **价格波动监控**: 检测价格大幅波动（可配置阈值）
-- **价格突破监控**: 识别支撑阻力位突破
-- **新高新低监控**: 检测历史新高或新低
+- **价格波动监控** (`price_volatility`): 检测价格变化、振幅异常和涨跌幅异常（三重检测）
+- **价格突破监控** (`price_breakout`): 识别支撑阻力位突破
+- **新高新低监控** (`new_high_low`): 检测历史新高或新低
 
 #### 技术指标规则
-- **MACD金叉死叉**: 移动平均收敛发散指标信号
-- **RSI超买超卖**: 相对强弱指数信号
-- **趋势分析**: 基于移动平均线的趋势识别
+- **MACD金叉死叉** (`macd_golden_cross`): 移动平均收敛发散指标信号
+- **RSI超买超卖** (`rsi_signal`): 相对强弱指数信号
+- **趋势分析** (`trend_analysis`): 基于移动平均线的趋势识别
 - **自定义规则**: 支持用户自定义技术指标规则
 
 ### ⚙️ 系统特性
@@ -80,11 +80,14 @@ python -m technical_index.monitor_cli show
       "interval": "1h",
       "rules": [
         {
-          "name": "价格波动监控",
+          "name": "price_volatility",
           "rule_type": "price_based",
           "enabled": true,
+          "description": "价格波动监控",
           "parameters": {
-            "volatility_threshold": 0.03
+            "volatility_threshold": 0.03,
+            "amplitude_multiplier": 2.0,
+            "change_multiplier": 2.0
           }
         }
       ]
@@ -116,6 +119,11 @@ python -m technical_index.monitor_cli add BTCUSDT --interval 1h
 python -m technical_index.monitor_cli remove BTCUSDT
 ```
 
+#### 移除特定时间间隔的交易对
+```bash
+python -m technical_index.monitor_cli remove BTCUSDT --interval 15m
+```
+
 #### 查看历史信号
 ```bash
 python -m technical_index.monitor_cli signals --file log/signals.json
@@ -128,17 +136,21 @@ python -m technical_index.monitor_cli signals --file log/signals.json
 ```python
 import asyncio
 from technical_index import (
-    RuleEngine, PriceMonitor, create_price_volatility_rule,
-    create_macd_rule, SignalResult
+    RuleEngine, PriceMonitor, RuleFactory, RuleNames, SignalResult
 )
 
 async def main():
     # 创建规则引擎
     rule_engine = RuleEngine()
     
-    # 添加规则
-    volatility_rule = create_price_volatility_rule("BTCUSDT", "1h", 0.03)
-    macd_rule = create_macd_rule("BTCUSDT", "1h")
+    # 使用RuleFactory创建规则
+    volatility_rule = RuleFactory.create_price_volatility_rule(
+        "BTCUSDT", "1h", 
+        volatility_threshold=0.03,
+        amplitude_multiplier=2.0,
+        change_multiplier=2.0
+    )
+    macd_rule = RuleFactory.create_macd_rule("BTCUSDT", "1h")
     
     rule_engine.add_rule(volatility_rule)
     rule_engine.add_rule(macd_rule)
@@ -152,9 +164,9 @@ async def main():
         print(f"信号类型: {signal.signal_type.value}")
         print(f"当前价格: {signal.current_price}")
         if signal.target_price:
-            print(f"目标价格: {signal.target_price}")
+            print(f"目标价格: {signal.format_price_with_change(signal.target_price)}")
         if signal.stop_loss:
-            print(f"止损价格: {signal.stop_loss}")
+            print(f"止损价格: {signal.format_price_with_change(signal.stop_loss)}")
     
     # 添加交易对
     monitor.add_symbol("BTCUSDT", my_callback)
@@ -202,6 +214,7 @@ def my_custom_rule(df, config):
             signal_type=SignalType.BULLISH,
             timestamp=df.index[-1],
             current_price=current_price,
+            interval=config.interval,
             confidence=0.8,
             target_price=current_price * 1.05,
             stop_loss=avg_price,
@@ -246,8 +259,15 @@ custom_rule = CustomRule(RuleConfig(
 ## 规则参数说明
 
 ### 价格波动规则 (PriceVolatilityRule)
-- `volatility_threshold`: 波动阈值，默认0.05 (5%)
+- `volatility_threshold`: 价格变化阈值，默认0.05 (5%)
 - `lookback_periods`: 回看周期数，默认20
+- `amplitude_multiplier`: 振幅倍数阈值，默认2.0
+- `change_multiplier`: 涨跌幅倍数阈值，默认2.0
+
+**检测类型：**
+1. **价格变化检测**: 检测当前价格相对于前一期的变化幅度
+2. **振幅异常检测**: 检测当日振幅是否超过历史平均振幅的指定倍数
+3. **涨跌幅异常检测**: 检测当日涨跌幅是否超过历史平均涨跌幅的指定倍数
 
 ### 价格突破规则 (PriceBreakoutRule)
 - `resistance_periods`: 阻力位计算周期，默认20
@@ -260,8 +280,8 @@ custom_rule = CustomRule(RuleConfig(
 - `signal_period`: 信号线周期，默认9
 
 ### RSI规则 (RSISignalRule)
-- `oversold_threshold`: 超卖阈值，默认30
-- `overbought_threshold`: 超买阈值，默认70
+- `oversold_threshold`: 超卖阈值，默认20
+- `overbought_threshold`: 超买阈值，默认80
 - `rsi_period`: RSI计算周期，默认14
 
 ### 趋势分析规则 (TrendAnalysisRule)

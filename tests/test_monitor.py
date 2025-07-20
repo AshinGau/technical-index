@@ -8,17 +8,14 @@ import datetime
 import json
 import logging
 import os
-import sys
 import tempfile
 
 import pytest
 
-from technical_index.config import ConfigManager, create_default_config
-from technical_index.monitor import (PriceMonitor, RuleEngine, SignalResult,
-                                     SignalType, create_breakout_rule,
-                                     create_macd_rule,
-                                     create_price_volatility_rule,
-                                     create_rsi_rule, create_trend_rule)
+from technical_index.config import ConfigManager
+from technical_index.constants import RuleNames
+from technical_index.rules import SignalResult, SignalType
+from technical_index.monitor import PriceMonitor, RuleEngine, RuleFactory
 
 # 配置日志
 logging.basicConfig(level=logging.INFO)
@@ -30,20 +27,20 @@ def test_rule_creation():
     print("🧪 测试规则创建...")
 
     # 测试价格波动规则
-    volatility_rule = create_price_volatility_rule("BTCUSDT", "1h", 0.03)
-    assert volatility_rule.name == "价格波动监控"
+    volatility_rule = RuleFactory.create_price_volatility_rule("BTCUSDT", "1h", 0.03)
+    assert volatility_rule.name == RuleNames.PRICE_VOLATILITY
     assert volatility_rule.symbol == "BTCUSDT"
     assert volatility_rule.interval == "1h"
     assert volatility_rule.volatility_threshold == 0.03
 
     # 测试突破规则
-    breakout_rule = create_breakout_rule("ETHUSDT", "1h")
-    assert breakout_rule.name == "价格突破监控"
+    breakout_rule = RuleFactory.create_breakout_rule("ETHUSDT", "1h")
+    assert breakout_rule.name == RuleNames.PRICE_BREAKOUT
     assert breakout_rule.symbol == "ETHUSDT"
 
     # 测试MACD规则
-    macd_rule = create_macd_rule("BNBUSDT", "1h")
-    assert macd_rule.name == "MACD金叉死叉"
+    macd_rule = RuleFactory.create_macd_rule("BNBUSDT", "1h")
+    assert macd_rule.name == RuleNames.MACD_GOLDEN_CROSS
     assert macd_rule.symbol == "BNBUSDT"
 
     print("✅ 规则创建测试通过")
@@ -56,27 +53,43 @@ def test_rule_engine():
     rule_engine = RuleEngine()
 
     # 添加规则
-    rule1 = create_price_volatility_rule("BTCUSDT", "1h")
-    rule2 = create_macd_rule("ETHUSDT", "1h")
+    rule1 = RuleFactory.create_price_volatility_rule("BTCUSDT", "1h")
+    rule2 = RuleFactory.create_macd_rule("ETHUSDT", "1h")
+    rule3 = RuleFactory.create_rsi_rule("BTCUSDT", "1h")  # 同一个symbol_interval的另一个规则
 
     rule_engine.add_rule(rule1)
     rule_engine.add_rule(rule2)
+    rule_engine.add_rule(rule3)
 
     # 测试获取规则
-    btc_rules = rule_engine.get_rules_for_symbol("BTCUSDT")
-    assert len(btc_rules) == 1
+    btc_rules = rule_engine.get_rules_for_symbol_interval("BTCUSDT", "1h")
+    assert len(btc_rules) == 2  # 两个规则：价格波动和RSI
     assert btc_rules[0].symbol == "BTCUSDT"
+    assert btc_rules[1].symbol == "BTCUSDT"
 
-    eth_rules = rule_engine.get_rules_for_symbol("ETHUSDT")
-    assert len(eth_rules) == 1
+    eth_rules = rule_engine.get_rules_for_symbol_interval("ETHUSDT", "1h")
+    assert len(eth_rules) == 1  # 一个规则：MACD
     assert eth_rules[0].symbol == "ETHUSDT"
 
+    # 测试获取所有symbol_interval组合
+    all_combinations = rule_engine.get_all_symbol_intervals()
+    assert len(all_combinations) == 2  # BTCUSDT_1h 和 ETHUSDT_1h
+    assert ("BTCUSDT", "1h") in all_combinations
+    assert ("ETHUSDT", "1h") in all_combinations
+
     # 测试移除规则
-    removed = rule_engine.remove_rule("BTCUSDT", "价格波动监控")
+    removed = rule_engine.remove_rule("BTCUSDT", "1h", RuleNames.PRICE_VOLATILITY)
     assert removed
 
-    btc_rules_after = rule_engine.get_rules_for_symbol("BTCUSDT")
-    assert len(btc_rules_after) == 0
+    btc_rules_after = rule_engine.get_rules_for_symbol_interval("BTCUSDT", "1h")
+    assert len(btc_rules_after) == 1  # 还剩一个RSI规则
+
+    # 测试移除所有规则
+    removed_all = rule_engine.remove_all_rules_for_symbol_interval("BTCUSDT", "1h")
+    assert removed_all
+
+    btc_rules_final = rule_engine.get_rules_for_symbol_interval("BTCUSDT", "1h")
+    assert len(btc_rules_final) == 0
 
     print("✅ 规则引擎测试通过")
 
@@ -94,11 +107,10 @@ def test_config_manager():
 
         # 测试默认配置创建
         config = config_manager.load_config()
-        assert config.monitor.interval == "1h"
         assert len(config.symbols) == 2  # BTCUSDT, ETHUSDT
 
         # 测试添加交易对
-        config_manager.add_symbol_config("ADAUSDT", "15m")
+        config_manager.add_symbol_config("ADAUSDT", "1h")
         config_manager.save_config()
 
         # 重新加载配置
@@ -107,7 +119,7 @@ def test_config_manager():
         assert len(config.symbols) == 3
 
         # 测试移除交易对
-        removed = config_manager.remove_symbol_config("ADAUSDT")
+        removed = config_manager.remove_symbol_config("ADAUSDT", "1h")
         assert removed
         config_manager.save_config()
 
@@ -139,11 +151,11 @@ def test_signal_callback():
     monitor = PriceMonitor(rule_engine)
 
     # 添加规则
-    rule = create_price_volatility_rule("BTCUSDT", "1h", 0.01)  # 1%阈值
+    rule = RuleFactory.create_price_volatility_rule("BTCUSDT", "1h", 0.01)  # 1%阈值
     rule_engine.add_rule(rule)
 
     # 添加交易对和回调
-    monitor.add_symbol("BTCUSDT", test_callback)
+    monitor.add_symbol_interval("BTCUSDT", "1h", test_callback)
 
     # 模拟信号触发（这里只是测试回调机制）
     test_signal = SignalResult(
@@ -152,6 +164,7 @@ def test_signal_callback():
         signal_type=SignalType.BULLISH,
         timestamp=datetime.datetime.now(),
         current_price=50000.0,
+        interval="1h",
         confidence=0.8,
     )
 
@@ -172,11 +185,11 @@ async def test_monitor_integration():
     monitor = PriceMonitor(rule_engine)
 
     # 添加规则
-    rule = create_price_volatility_rule("BTCUSDT", "1h", 0.01)
+    rule = RuleFactory.create_price_volatility_rule("BTCUSDT", "1h", 0.01)
     rule_engine.add_rule(rule)
 
     # 添加交易对
-    monitor.add_symbol("BTCUSDT")
+    monitor.add_symbol_interval("BTCUSDT", "1h")
 
     # 启动监控（只运行很短时间）
     monitor_task = asyncio.create_task(monitor.start_monitoring())
@@ -205,6 +218,7 @@ def test_signal_serialization():
         signal_type=SignalType.BULLISH,
         timestamp=datetime.datetime.now(),
         current_price=50000.0,
+        interval="1h",
         confidence=0.8,
         duration=5,
         target_price=52500.0,
@@ -246,6 +260,103 @@ def test_signal_serialization():
     print("✅ 信号序列化测试通过")
 
 
+def test_config_loading():
+    """测试配置加载和全局规则合并"""
+    print("🧪 测试配置加载和全局规则合并...")
+
+    from technical_index.config import (
+        GlobalConfig,
+        RuleDefinition,
+        SymbolConfig,
+        load_rules_from_config,
+    )
+    from technical_index.constants import RuleNames
+
+    # 创建测试配置
+    global_rules = [
+        RuleDefinition(
+            name=RuleNames.PRICE_VOLATILITY,
+            rule_type="price_based",
+            enabled=True,
+            parameters={"volatility_threshold": 0.04},
+            description="价格波动监控",
+        )
+    ]
+
+    symbols = [
+        SymbolConfig(
+            symbol="ETHUSDT",
+            interval="1d",
+            use_global_rules=True,
+            rules=[
+                RuleDefinition(
+                    name=RuleNames.MACD_GOLDEN_CROSS,
+                    rule_type="technical",
+                    enabled=True,
+                    parameters={},
+                    description="MACD金叉死叉",
+                )
+            ],
+        ),
+        SymbolConfig(
+            symbol="ETHUSDT",
+            interval="1h",
+            use_global_rules=False,
+            rules=[
+                RuleDefinition(
+                    name=RuleNames.PRICE_VOLATILITY,
+                    rule_type="price_based",
+                    enabled=True,
+                    parameters={"volatility_threshold": 0.03},  # 覆盖全局规则的参数
+                    description="价格波动监控",
+                ),
+                RuleDefinition(
+                    name=RuleNames.RSI_SIGNAL,
+                    rule_type="technical",
+                    enabled=True,
+                    parameters={},
+                    description="RSI超买超卖",
+                ),
+            ],
+        ),
+    ]
+
+    config = GlobalConfig(global_rules=global_rules, symbols=symbols)
+
+    # 加载规则
+    rules = load_rules_from_config(config)
+
+    # 验证规则加载
+    assert len(rules) == 4  # ETHUSDT_1d: 2个规则(global+local), ETHUSDT_1h: 2个规则(local only)
+
+    # 创建规则引擎并添加规则
+    rule_engine = RuleEngine()
+    for rule in rules:
+        rule_engine.add_rule(rule)
+
+    # 测试 ETHUSDT_1d (use_global_rules=True)
+    ethusdt_1d_rules = rule_engine.get_rules_for_symbol_interval("ETHUSDT", "1d")
+    assert len(ethusdt_1d_rules) == 2  # 全局规则 + 本地规则
+    rule_names = [rule.name for rule in ethusdt_1d_rules]
+    assert RuleNames.PRICE_VOLATILITY in rule_names
+    assert RuleNames.MACD_GOLDEN_CROSS in rule_names
+
+    # 测试 ETHUSDT_1h (use_global_rules=False)
+    ethusdt_1h_rules = rule_engine.get_rules_for_symbol_interval("ETHUSDT", "1h")
+    assert len(ethusdt_1h_rules) == 2  # 只有本地规则
+    rule_names = [rule.name for rule in ethusdt_1h_rules]
+    assert RuleNames.PRICE_VOLATILITY in rule_names
+    assert RuleNames.RSI_SIGNAL in rule_names
+
+    # 验证参数覆盖
+    volatility_rule_1h = next(
+        rule for rule in ethusdt_1h_rules if rule.name == RuleNames.PRICE_VOLATILITY
+    )
+    assert volatility_rule_1h.volatility_threshold == 0.03  # 使用本地参数
+
+    print("✅ 配置加载和全局规则合并测试通过")
+
+
 async def main():
     """主测试函数"""
     print("🚀 开始监控系统测试...")
@@ -258,6 +369,7 @@ async def main():
         test_signal_callback()
         await test_monitor_integration()
         test_signal_serialization()
+        test_config_loading()
 
         print("\n🎉 所有测试通过！")
 
