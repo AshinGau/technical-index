@@ -10,9 +10,11 @@ import numpy as np
 import pandas as pd
 
 from technical_index.binance import get_futures_market_data
-from technical_index.index import (build_indicator_parameters,
-                                   build_quantitative_analysis,
-                                   get_available_indicators)
+from technical_index.index import (
+    build_indicator_parameters,
+    build_quantitative_analysis,
+    get_available_indicators,
+)
 
 # 过滤pandas警告
 warnings.filterwarnings("ignore", category=pd.errors.SettingWithCopyWarning)

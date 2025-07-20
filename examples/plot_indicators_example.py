@@ -5,8 +5,7 @@
 """
 
 from technical_index.binance import get_futures_market_data
-from technical_index.index import (build_indicator_parameters,
-                                   build_quantitative_analysis)
+from technical_index.index import build_indicator_parameters, build_quantitative_analysis
 from technical_index.plot import PlotConfig, plot_candlestick_with_indicators
 
 
@@ -31,7 +30,7 @@ def main():
 
     # 计算技术指标
     print("正在计算技术指标...")
-    df_with_indicators = build_quantitative_analysis(df, **indicator_params)
+    df_with_indicators = build_quantitative_analysis(df, indicators=None, **indicator_params)
 
     if df_with_indicators is None:
         print("计算技术指标失败")

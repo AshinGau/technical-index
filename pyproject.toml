@@ -9,7 +9,7 @@ description = "A Python project for technical index calculations"
 readme = "README.md"
 requires-python = ">=3.8"
 authors = [
-    {name = "Your Name", email = "your.email@example.com"},
+    {name = "AshinGau", email = "helloxiyue@gmail.com"},
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -37,7 +37,6 @@ dev = [
     "black>=22.0",
     "flake8>=4.0",
     "mypy>=0.900",
-    "isort>=5.12.0",
 ]
 
 [project.scripts]

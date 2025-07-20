@@ -5,8 +5,7 @@ PlotConfig 配置示例
 """
 
 from technical_index.binance import get_futures_market_data
-from technical_index.index import (build_indicator_parameters,
-                                   build_quantitative_analysis)
+from technical_index.index import build_indicator_parameters, build_quantitative_analysis
 from technical_index.plot import PlotConfig, plot_candlestick_with_indicators
 
 
@@ -23,7 +22,7 @@ def example_basic_config():
 
     # 计算技术指标
     params = build_indicator_parameters(ma_periods=(7, 25, 99))
-    df_with_indicators = build_quantitative_analysis(df, **params)
+    df_with_indicators = build_quantitative_analysis(df, indicators=None, **params)
 
     # 基本配置
     config = PlotConfig(
@@ -49,7 +48,7 @@ def example_advanced_config():
 
     # 计算技术指标
     params = build_indicator_parameters(ma_periods=(7, 25, 99))
-    df_with_indicators = build_quantitative_analysis(df, **params)
+    df_with_indicators = build_quantitative_analysis(df, indicators=None, **params)
 
     # 高级配置
     config = PlotConfig(
@@ -82,7 +81,7 @@ def example_custom_indicators():
 
     # 计算技术指标
     params = build_indicator_parameters(ma_periods=(7, 25, 99))
-    df_with_indicators = build_quantitative_analysis(df, **params)
+    df_with_indicators = build_quantitative_analysis(df, indicators=None, **params)
 
     # 不同的指标组合
     configs = [
@@ -130,7 +129,7 @@ def example_kwargs_usage():
 
     # 计算技术指标
     params = build_indicator_parameters(ma_periods=(7, 25, 99))
-    df_with_indicators = build_quantitative_analysis(df, **params)
+    df_with_indicators = build_quantitative_analysis(df, indicators=None, **params)
 
     # 直接使用kwargs参数
     plot_candlestick_with_indicators(

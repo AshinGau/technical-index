@@ -9,16 +9,18 @@ import unittest
 import numpy as np
 import pandas as pd
 
-from technical_index.index import (build_indicator_parameters,
-                                   build_quantitative_analysis,
-                                   calculate_candlestick_patterns,
-                                   calculate_momentum_indicators,
-                                   calculate_overlap_indicators,
-                                   calculate_statistics_indicators,
-                                   calculate_trend_indicators,
-                                   calculate_volatility_indicators,
-                                   calculate_volume_indicators,
-                                   get_available_indicators)
+from technical_index.index import (
+    build_indicator_parameters,
+    build_quantitative_analysis,
+    calculate_candlestick_patterns,
+    calculate_momentum_indicators,
+    calculate_overlap_indicators,
+    calculate_statistics_indicators,
+    calculate_trend_indicators,
+    calculate_volatility_indicators,
+    calculate_volume_indicators,
+    get_available_indicators,
+)
 
 
 class TestTechnicalIndicators(unittest.TestCase):

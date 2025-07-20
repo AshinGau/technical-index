@@ -1,52 +1,41 @@
 {
-  "monitor": {
-    "symbols": [
-      "BTCUSDT",
-      "ETHUSDT"
-    ],
-    "interval": "1h",
-    "check_interval_minutes": 15,
-    "enabled": true,
-    "log_level": "INFO",
-    "save_signals": true,
-    "signal_file": "log/signals.json"
-  },
+  "global_rules": [
+    {
+      "name": "price_volatility",
+      "rule_type": "price_based",
+      "enabled": true,
+      "parameters": {
+        "volatility_threshold": 0.04
+      },
+      "description": "价格波动监控"
+    }
+  ],
   "symbols": [
     {
-      "symbol": "BTCUSDT",
-      "interval": "1h",
+      "symbol": "ETHUSDT",
+      "interval": "1d",
+      "use_global_rules": true,
       "rules": [
         {
-          "name": "价格波动监控",
-          "rule_type": "price_based",
-          "enabled": true,
-          "parameters": {
-            "volatility_threshold": 0.03
-          }
-        },
-        {
-          "name": "价格突破监控",
-          "rule_type": "price_based",
-          "enabled": true,
-          "parameters": {}
-        },
-        {
-          "name": "MACD金叉死叉",
+          "name": "macd_golden_cross",
           "rule_type": "technical",
           "enabled": true,
-          "parameters": {}
+          "parameters": {},
+          "description": "MACD金叉死叉"
         },
         {
-          "name": "RSI超买超卖",
+          "name": "rsi_signal",
           "rule_type": "technical",
           "enabled": true,
-          "parameters": {}
+          "parameters": {},
+          "description": "RSI超买超卖"
         },
         {
-          "name": "趋势分析",
+          "name": "trend_analysis",
           "rule_type": "technical",
           "enabled": true,
-          "parameters": {}
+          "parameters": {},
+          "description": "趋势分析"
         }
       ],
       "callback_module": null,
@@ -55,50 +44,140 @@
     {
       "symbol": "ETHUSDT",
       "interval": "1h",
+      "use_global_rules": false,
       "rules": [
         {
-          "name": "价格波动监控",
+          "name": "price_volatility",
           "rule_type": "price_based",
           "enabled": true,
           "parameters": {
             "volatility_threshold": 0.03
-          }
+          },
+          "description": "价格波动监控"
         },
         {
-          "name": "价格突破监控",
+          "name": "price_breakout",
           "rule_type": "price_based",
           "enabled": true,
-          "parameters": {}
+          "parameters": {},
+          "description": "价格突破监控"
         },
         {
-          "name": "MACD金叉死叉",
+          "name": "macd_golden_cross",
           "rule_type": "technical",
           "enabled": true,
-          "parameters": {}
+          "parameters": {},
+          "description": "MACD金叉死叉"
         },
         {
-          "name": "RSI超买超卖",
+          "name": "rsi_signal",
           "rule_type": "technical",
           "enabled": true,
-          "parameters": {}
+          "parameters": {},
+          "description": "RSI超买超卖"
         },
         {
-          "name": "趋势分析",
+          "name": "trend_analysis",
           "rule_type": "technical",
           "enabled": true,
-          "parameters": {}
+          "parameters": {},
+          "description": "趋势分析"
         }
       ],
       "callback_module": null,
       "callback_function": null
     },
     {
-      "symbol": "ADAUSDT",
+      "symbol": "ETHUSDT",
       "interval": "15m",
-      "rules": [],
+      "use_global_rules": true,
+      "rules": [
+        {
+          "name": "price_volatility",
+          "rule_type": "price_based",
+          "enabled": true,
+          "parameters": {
+            "volatility_threshold": 0.02
+          },
+          "description": "价格波动监控"
+        },
+        {
+          "name": "price_breakout",
+          "rule_type": "price_based",
+          "enabled": true,
+          "parameters": {},
+          "description": "价格突破监控"
+        },
+        {
+          "name": "macd_golden_cross",
+          "rule_type": "technical",
+          "enabled": true,
+          "parameters": {},
+          "description": "MACD金叉死叉"
+        },
+        {
+          "name": "rsi_signal",
+          "rule_type": "technical",
+          "enabled": true,
+          "parameters": {},
+          "description": "RSI超买超卖"
+        },
+        {
+          "name": "trend_analysis",
+          "rule_type": "technical",
+          "enabled": true,
+          "parameters": {},
+          "description": "趋势分析"
+        }
+      ],
+      "callback_module": null,
+      "callback_function": null
+    },
+    {
+      "symbol": "BTCUSDT ",
+      "interval": "1h",
+      "use_global_rules": false,
+      "rules": [
+        {
+          "name": "price_volatility",
+          "rule_type": "price_based",
+          "enabled": true,
+          "parameters": {
+            "volatility_threshold": 0.02
+          },
+          "description": "价格波动监控"
+        },
+        {
+          "name": "price_breakout",
+          "rule_type": "price_based",
+          "enabled": true,
+          "parameters": {},
+          "description": "价格突破监控"
+        },
+        {
+          "name": "macd_golden_cross",
+          "rule_type": "technical",
+          "enabled": true,
+          "parameters": {},
+          "description": "MACD金叉死叉"
+        },
+        {
+          "name": "rsi_signal",
+          "rule_type": "technical",
+          "enabled": true,
+          "parameters": {},
+          "description": "RSI超买超卖"
+        },
+        {
+          "name": "trend_analysis",
+          "rule_type": "technical",
+          "enabled": true,
+          "parameters": {},
+          "description": "趋势分析"
+        }
+      ],
       "callback_module": null,
       "callback_function": null
     }
-  ],
-  "global_rules": []
+  ]
 }

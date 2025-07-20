@@ -19,12 +19,17 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def build_quantitative_analysis(df, **kwargs):
+def build_quantitative_analysis(df, indicators=None, **kwargs):
     """
     在DataFrame上计算技术指标
 
     Args:
         df: 包含OHLCV数据的DataFrame
+        indicators: 要计算的指标列表，如果为None则计算所有指标
+            支持的指标类型:
+            ['momentum', 'overlap', 'trend', 'volatility', 'volume', 'statistics', 'candlestick']
+            或者具体的指标名称:
+            ['macd', 'rsi', 'sma', 'ema', 'bbands', 'atr', 'obv', 'mfi', ...]
         **kwargs: 技术指标参数，包括ma_periods等
 
     Returns:
@@ -33,14 +38,94 @@ def build_quantitative_analysis(df, **kwargs):
     if df is None or df.empty:
         return None
 
-    # 计算所有技术指标
-    df = calculate_momentum_indicators(df, **kwargs)
-    df = calculate_overlap_indicators(df, **kwargs)
-    df = calculate_trend_indicators(df, **kwargs)
-    df = calculate_volatility_indicators(df, **kwargs)
-    df = calculate_volume_indicators(df, **kwargs)
-    df = calculate_statistics_indicators(df, **kwargs)
-    df = calculate_candlestick_patterns(df, **kwargs)
+    # 如果没有指定指标，计算所有指标
+    if indicators is None:
+        df = calculate_momentum_indicators(df, **kwargs)
+        df = calculate_overlap_indicators(df, **kwargs)
+        df = calculate_trend_indicators(df, **kwargs)
+        df = calculate_volatility_indicators(df, **kwargs)
+        df = calculate_volume_indicators(df, **kwargs)
+        df = calculate_statistics_indicators(df, **kwargs)
+        df = calculate_candlestick_patterns(df, **kwargs)
+    else:
+        # 根据指定的指标类型计算
+        if isinstance(indicators, str):
+            indicators = [indicators]
+
+        # 指标类型映射
+        indicator_groups = {
+            "momentum": calculate_momentum_indicators,
+            "overlap": calculate_overlap_indicators,
+            "trend": calculate_trend_indicators,
+            "volatility": calculate_volatility_indicators,
+            "volume": calculate_volume_indicators,
+            "statistics": calculate_statistics_indicators,
+            "candlestick": calculate_candlestick_patterns,
+        }
+
+        # 计算指定的指标组
+        for indicator in indicators:
+            if indicator in indicator_groups:
+                df = indicator_groups[indicator](df, **kwargs)
+            else:
+                # 如果是具体指标名称，计算对应的指标组
+                if indicator in [
+                    "macd",
+                    "rsi",
+                    "stoch",
+                    "willr",
+                    "cci",
+                    "roc",
+                    "mom",
+                    "trix",
+                    "tsi",
+                    "kdj",
+                    "fisher",
+                    "coppock",
+                    "uo",
+                ]:
+                    df = calculate_momentum_indicators(df, **kwargs)
+                elif indicator in [
+                    "sma",
+                    "ema",
+                    "dema",
+                    "tema",
+                    "hma",
+                    "wma",
+                    "kama",
+                    "vwap",
+                    "ichimoku",
+                    "supertrend",
+                ]:
+                    df = calculate_overlap_indicators(df, **kwargs)
+                elif indicator in ["adx", "aroon", "psar", "vortex", "vhf", "chop", "ttm_trend"]:
+                    df = calculate_trend_indicators(df, **kwargs)
+                elif indicator in ["bbands", "atr", "natr", "keltner", "donchian", "massi", "ui"]:
+                    df = calculate_volatility_indicators(df, **kwargs)
+                elif indicator in [
+                    "mfi",
+                    "obv",
+                    "ad",
+                    "adosc",
+                    "cmf",
+                    "eom",
+                    "pvi",
+                    "nvi",
+                    "taker_buy",
+                ]:
+                    df = calculate_volume_indicators(df, **kwargs)
+                elif indicator in [
+                    "zscore",
+                    "kurtosis",
+                    "skew",
+                    "variance",
+                    "stdev",
+                    "median",
+                    "mad",
+                ]:
+                    df = calculate_statistics_indicators(df, **kwargs)
+                elif indicator in ["cdl_patterns"]:
+                    df = calculate_candlestick_patterns(df, **kwargs)
 
     return df
 
