@@ -271,36 +271,55 @@ def load_rules_from_config(config: GlobalConfig) -> List:
 def _create_rule_instance(rule_def: RuleDefinition, symbol: str, interval: str) -> Optional[Any]:
     """创建规则实例"""
 
+    parameters = rule_def.parameters or {}
     try:
         if rule_def.rule_type == RuleType.PRICE_BASED.value:
             if rule_def.name == RuleNames.PRICE_VOLATILITY:
                 return RuleFactory.create_price_volatility_rule(
                     symbol=symbol,
                     interval=interval,
-                    volatility_threshold=rule_def.parameters.get("volatility_threshold", 0.05),
-                    amplitude_multiplier=rule_def.parameters.get("amplitude_multiplier", 2.0),
-                    change_multiplier=rule_def.parameters.get("change_multiplier", 2.0),
+                    **parameters,
                 )
             elif rule_def.name == RuleNames.PRICE_BREAKOUT:
-                return RuleFactory.create_breakout_rule(symbol=symbol, interval=interval)
+                return RuleFactory.create_breakout_rule(
+                    symbol=symbol,
+                    interval=interval,
+                    **parameters,
+                )
             elif rule_def.name == RuleNames.NEW_HIGH_LOW:
-                return RuleFactory.create_new_high_low_rule(symbol=symbol, interval=interval)
+                return RuleFactory.create_new_high_low_rule(
+                    symbol=symbol,
+                    interval=interval,
+                    **parameters,
+                )
         elif rule_def.rule_type == RuleType.TECHNICAL_INDICATOR.value:
             if rule_def.name == RuleNames.MACD_GOLDEN_CROSS:
-                return RuleFactory.create_macd_rule(symbol=symbol, interval=interval)
+                return RuleFactory.create_macd_rule(
+                    symbol=symbol,
+                    interval=interval,
+                    **parameters,
+                )
             elif rule_def.name == RuleNames.RSI_SIGNAL:
-                return RuleFactory.create_rsi_rule(symbol=symbol, interval=interval)
+                return RuleFactory.create_rsi_rule(
+                    symbol=symbol,
+                    interval=interval,
+                    **parameters,
+                )
             elif rule_def.name == RuleNames.TREND_ANALYSIS:
-                return RuleFactory.create_trend_rule(symbol=symbol, interval=interval)
+                return RuleFactory.create_trend_rule(
+                    symbol=symbol,
+                    interval=interval,
+                    **parameters,
+                )
         elif rule_def.rule_type == RuleType.CUSTOM.value:
-            # 自定义规则需要特殊处理
-            evaluator = rule_def.parameters.get("evaluator")
+            evaluator = parameters.get("evaluator")
             if evaluator:
                 return RuleFactory.create_custom_rule(
                     symbol=symbol,
                     interval=interval,
                     name=rule_def.name,
                     evaluator=evaluator,
+                    **parameters,
                 )
     except Exception as e:
         logger.error(f"创建规则实例失败: {rule_def.name} - {e}")

@@ -4,180 +4,167 @@
       "name": "price_volatility",
       "rule_type": "price_based",
       "enabled": true,
-      "parameters": {
-        "volatility_threshold": 0.04
-      },
+      "parameters": {},
       "description": "价格波动监控"
+    },
+    {
+      "name": "price_breakout",
+      "rule_type": "price_based",
+      "enabled": true,
+      "parameters": {},
+      "description": "价格突破监控"
+    },
+    {
+      "name": "new_high_low",
+      "rule_type": "price_based",
+      "enabled": true,
+      "parameters": {},
+      "description": "新高新低监控"
+    },
+    {
+      "name": "trend_analysis",
+      "rule_type": "technical",
+      "enabled": true,
+      "parameters": {},
+      "description": "趋势分析"
+    },
+    {
+      "name": "macd_golden_cross",
+      "rule_type": "technical",
+      "enabled": true,
+      "parameters": {
+        "lookback_period": 4
+      },
+      "description": "MACD金叉死叉"
+    },
+    {
+      "name": "rsi_signal",
+      "rule_type": "technical",
+      "enabled": true,
+      "parameters": {},
+      "description": "RSI超买超卖"
     }
   ],
   "symbols": [
     {
+      "symbol": "BTCUSDT",
+      "interval": "1d",
+      "use_global_rules": true
+    },
+    {
+      "symbol": "BTCUSDT",
+      "interval": "1h",
+      "use_global_rules": true
+    },
+    {
+      "symbol": "BTCUSDT",
+      "interval": "15m",
+      "use_global_rules": true
+    },
+    {
       "symbol": "ETHUSDT",
       "interval": "1d",
-      "use_global_rules": true,
-      "rules": [
-        {
-          "name": "macd_golden_cross",
-          "rule_type": "technical",
-          "enabled": true,
-          "parameters": {},
-          "description": "MACD金叉死叉"
-        },
-        {
-          "name": "rsi_signal",
-          "rule_type": "technical",
-          "enabled": true,
-          "parameters": {},
-          "description": "RSI超买超卖"
-        },
-        {
-          "name": "trend_analysis",
-          "rule_type": "technical",
-          "enabled": true,
-          "parameters": {},
-          "description": "趋势分析"
-        }
-      ],
-      "callback_module": null,
-      "callback_function": null
+      "use_global_rules": true
     },
     {
       "symbol": "ETHUSDT",
       "interval": "1h",
-      "use_global_rules": false,
-      "rules": [
-        {
-          "name": "price_volatility",
-          "rule_type": "price_based",
-          "enabled": true,
-          "parameters": {
-            "volatility_threshold": 0.03
-          },
-          "description": "价格波动监控"
-        },
-        {
-          "name": "price_breakout",
-          "rule_type": "price_based",
-          "enabled": true,
-          "parameters": {},
-          "description": "价格突破监控"
-        },
-        {
-          "name": "macd_golden_cross",
-          "rule_type": "technical",
-          "enabled": true,
-          "parameters": {},
-          "description": "MACD金叉死叉"
-        },
-        {
-          "name": "rsi_signal",
-          "rule_type": "technical",
-          "enabled": true,
-          "parameters": {},
-          "description": "RSI超买超卖"
-        },
-        {
-          "name": "trend_analysis",
-          "rule_type": "technical",
-          "enabled": true,
-          "parameters": {},
-          "description": "趋势分析"
-        }
-      ],
-      "callback_module": null,
-      "callback_function": null
+      "use_global_rules": true
     },
     {
       "symbol": "ETHUSDT",
       "interval": "15m",
-      "use_global_rules": true,
-      "rules": [
-        {
-          "name": "price_volatility",
-          "rule_type": "price_based",
-          "enabled": true,
-          "parameters": {
-            "volatility_threshold": 0.02
-          },
-          "description": "价格波动监控"
-        },
-        {
-          "name": "price_breakout",
-          "rule_type": "price_based",
-          "enabled": true,
-          "parameters": {},
-          "description": "价格突破监控"
-        },
-        {
-          "name": "macd_golden_cross",
-          "rule_type": "technical",
-          "enabled": true,
-          "parameters": {},
-          "description": "MACD金叉死叉"
-        },
-        {
-          "name": "rsi_signal",
-          "rule_type": "technical",
-          "enabled": true,
-          "parameters": {},
-          "description": "RSI超买超卖"
-        },
-        {
-          "name": "trend_analysis",
-          "rule_type": "technical",
-          "enabled": true,
-          "parameters": {},
-          "description": "趋势分析"
-        }
-      ],
-      "callback_module": null,
-      "callback_function": null
+      "use_global_rules": true
     },
     {
-      "symbol": "BTCUSDT ",
+      "symbol": "DOGEUSDT",
+      "interval": "1d",
+      "use_global_rules": true
+    },
+    {
+      "symbol": "DOGEUSDT",
       "interval": "1h",
-      "use_global_rules": false,
-      "rules": [
-        {
-          "name": "price_volatility",
-          "rule_type": "price_based",
-          "enabled": true,
-          "parameters": {
-            "volatility_threshold": 0.02
-          },
-          "description": "价格波动监控"
-        },
-        {
-          "name": "price_breakout",
-          "rule_type": "price_based",
-          "enabled": true,
-          "parameters": {},
-          "description": "价格突破监控"
-        },
-        {
-          "name": "macd_golden_cross",
-          "rule_type": "technical",
-          "enabled": true,
-          "parameters": {},
-          "description": "MACD金叉死叉"
-        },
-        {
-          "name": "rsi_signal",
-          "rule_type": "technical",
-          "enabled": true,
-          "parameters": {},
-          "description": "RSI超买超卖"
-        },
-        {
-          "name": "trend_analysis",
-          "rule_type": "technical",
-          "enabled": true,
-          "parameters": {},
-          "description": "趋势分析"
-        }
-      ],
-      "callback_module": null,
-      "callback_function": null
+      "use_global_rules": true
+    },
+    {
+      "symbol": "DOGEUSDT",
+      "interval": "15m",
+      "use_global_rules": true
+    },
+    {
+      "symbol": "APTUSDT",
+      "interval": "1d",
+      "use_global_rules": true
+    },
+    {
+      "symbol": "APTUSDT",
+      "interval": "1h",
+      "use_global_rules": true
+    },
+    {
+      "symbol": "APTUSDT",
+      "interval": "15m",
+      "use_global_rules": true
+    },
+    {
+      "symbol": "TRUMPUSDT",
+      "interval": "1d",
+      "use_global_rules": true
+    },
+    {
+      "symbol": "TRUMPUSDT",
+      "interval": "1h",
+      "use_global_rules": true
+    },
+    {
+      "symbol": "TRUMPUSDT",
+      "interval": "15m",
+      "use_global_rules": true
+    },
+    {
+      "symbol": "GUSDT",
+      "interval": "1d",
+      "use_global_rules": true
+    },
+    {
+      "symbol": "GUSDT",
+      "interval": "1h",
+      "use_global_rules": true
+    },
+    {
+      "symbol": "GUSDT",
+      "interval": "15m",
+      "use_global_rules": true
+    },
+    {
+      "symbol": "XRPUSDT",
+      "interval": "1d",
+      "use_global_rules": true
+    },
+    {
+      "symbol": "XRPUSDT",
+      "interval": "1h",
+      "use_global_rules": true
+    },
+    {
+      "symbol": "XRPUSDT",
+      "interval": "15m",
+      "use_global_rules": true
+    },
+    {
+      "symbol": "TRXUSDT",
+      "interval": "1d",
+      "use_global_rules": true
+    },
+    {
+      "symbol": "TRXUSDT",
+      "interval": "1h",
+      "use_global_rules": true
+    },
+    {
+      "symbol": "TRXUSDT",
+      "interval": "15m",
+      "use_global_rules": true
     }
   ]
 }

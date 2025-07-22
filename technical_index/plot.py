@@ -592,7 +592,7 @@ def plot_candlestick_with_indicators(df, config: Optional[PlotConfig] = None, **
 
     # ATR 指标
     if "atr" in indicators_lower:
-        atr_col = f"ATR_{config.atr_length}"
+        atr_col = f"ATRr_{config.atr_length}"
         if atr_col in df_plot.columns:
             ap.extend(
                 [

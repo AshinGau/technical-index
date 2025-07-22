@@ -27,7 +27,9 @@ def test_rule_creation():
     print("🧪 测试规则创建...")
 
     # 测试价格波动规则
-    volatility_rule = RuleFactory.create_price_volatility_rule("BTCUSDT", "1h", 0.03)
+    volatility_rule = RuleFactory.create_price_volatility_rule(
+        "BTCUSDT", "1h", volatility_threshold=0.03
+    )
     assert volatility_rule.name == RuleNames.PRICE_VOLATILITY
     assert volatility_rule.symbol == "BTCUSDT"
     assert volatility_rule.interval == "1h"
@@ -151,7 +153,9 @@ def test_signal_callback():
     monitor = PriceMonitor(rule_engine)
 
     # 添加规则
-    rule = RuleFactory.create_price_volatility_rule("BTCUSDT", "1h", 0.01)  # 1%阈值
+    rule = RuleFactory.create_price_volatility_rule(
+        "BTCUSDT", "1h", volatility_threshold=0.01
+    )  # 1%阈值
     rule_engine.add_rule(rule)
 
     # 添加交易对和回调
@@ -185,7 +189,7 @@ async def test_monitor_integration():
     monitor = PriceMonitor(rule_engine)
 
     # 添加规则
-    rule = RuleFactory.create_price_volatility_rule("BTCUSDT", "1h", 0.01)
+    rule = RuleFactory.create_price_volatility_rule("BTCUSDT", "1h", volatility_threshold=0.01)
     rule_engine.add_rule(rule)
 
     # 添加交易对

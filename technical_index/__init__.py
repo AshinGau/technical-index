@@ -21,7 +21,7 @@ from .config import (
 )
 
 # 导出常量
-from .constants import DEFAULT_CONFIG_FILE, DEFAULT_SIGNAL_FILE, RULE_DESCRIPTIONS, RuleNames
+from .constants import DEFAULT_CONFIG_FILE, RULE_DESCRIPTIONS, RuleNames
 
 # rules
 from .rules import (
@@ -56,7 +56,6 @@ __all__ = [
     "config",
     # 常量
     "DEFAULT_CONFIG_FILE",
-    "DEFAULT_SIGNAL_FILE",
     "RuleNames",
     "RULE_DESCRIPTIONS",
     # 核心类

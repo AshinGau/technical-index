@@ -65,30 +65,29 @@ python -m technical_index.monitor_cli show
 
 ```json
 {
-  "monitor": {
-    "symbols": ["BTCUSDT", "ETHUSDT"],
-    "interval": "1h",
-    "check_interval_minutes": 15,
-    "enabled": true,
-    "log_level": "INFO",
-    "save_signals": true,
-    "signal_file": "signals.json"
-  },
+  "global_rules": [
+    {
+      "name": "price_volatility",
+      "rule_type": "price_based",
+      "enabled": true,
+      "parameters": {
+        "volatility_threshold": 0.04
+      },
+      "description": "价格波动监控"
+    }
+  ],
   "symbols": [
     {
       "symbol": "BTCUSDT",
       "interval": "1h",
+      "use_global_rules": true,
       "rules": [
         {
-          "name": "price_volatility",
-          "rule_type": "price_based",
+          "name": "macd_golden_cross",
+          "rule_type": "technical",
           "enabled": true,
-          "description": "价格波动监控",
-          "parameters": {
-            "volatility_threshold": 0.03,
-            "amplitude_multiplier": 2.0,
-            "change_multiplier": 2.0
-          }
+          "parameters": {},
+          "description": "MACD金叉死叉"
         }
       ]
     }
@@ -99,34 +98,9 @@ python -m technical_index.monitor_cli show
 
 ### 命令行工具
 
-#### 初始化配置
-```bash
-python -m technical_index.monitor_cli init --config config/my_config.json
-```
-
 #### 启动监控
 ```bash
-python -m technical_index.monitor_cli start --config config/my_config.json
-```
-
-#### 添加交易对
-```bash
-python -m technical_index.monitor_cli add BTCUSDT --interval 1h
-```
-
-#### 移除交易对
-```bash
-python -m technical_index.monitor_cli remove BTCUSDT
-```
-
-#### 移除特定时间间隔的交易对
-```bash
-python -m technical_index.monitor_cli remove BTCUSDT --interval 15m
-```
-
-#### 查看历史信号
-```bash
-python -m technical_index.monitor_cli signals --file log/signals.json
+python -m technical_index.monitor_cli start
 ```
 
 ### 编程接口

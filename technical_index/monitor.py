@@ -188,6 +188,8 @@ class PriceMonitor:
         print(f"⏱️ 预期持续: {signal.duration} 周期")
         if signal.additional_signals:
             print(f"🔍 额外关注: {', '.join(signal.additional_signals)}")
+        if signal.metadata:
+            print(f"🔍 额外信息: {signal.metadata}")
         print("=" * 50)
 
     def get_check_interval(self, interval: str) -> int:
@@ -229,6 +231,7 @@ class PriceMonitor:
             symbol_intervals = self.rule_engine.get_all_symbol_intervals()
             for symbol, interval in symbol_intervals:
                 self._start_monitoring_task(symbol, interval)
+                await asyncio.sleep(1)
 
         logger.info("价格监控已启动")
         try:
@@ -266,82 +269,83 @@ class RuleFactory:
     def create_price_volatility_rule(
         symbol: str,
         interval: str,
-        volatility_threshold: float = 0.05,
-        amplitude_multiplier: float = 2.0,
-        change_multiplier: float = 2.0,
+        **parameters,
     ) -> PriceVolatilityRule:
         config = RuleConfig(
             name=RuleNames.PRICE_VOLATILITY,
             rule_type=RuleType.PRICE_BASED,
             symbol=symbol,
             interval=interval,
-            parameters={
-                "volatility_threshold": volatility_threshold,
-                "amplitude_multiplier": amplitude_multiplier,
-                "change_multiplier": change_multiplier,
-            },
+            parameters=parameters,
         )
         return PriceVolatilityRule(config)
 
     @staticmethod
-    def create_breakout_rule(symbol: str, interval: str) -> PriceBreakoutRule:
+    def create_breakout_rule(symbol: str, interval: str, **parameters) -> PriceBreakoutRule:
         config = RuleConfig(
             name=RuleNames.PRICE_BREAKOUT,
             rule_type=RuleType.PRICE_BASED,
             symbol=symbol,
             interval=interval,
+            parameters=parameters,
         )
         return PriceBreakoutRule(config)
 
     @staticmethod
-    def create_rsi_rule(symbol: str, interval: str) -> RSISignalRule:
+    def create_rsi_rule(symbol: str, interval: str, **parameters) -> RSISignalRule:
         config = RuleConfig(
             name=RuleNames.RSI_SIGNAL,
             rule_type=RuleType.TECHNICAL_INDICATOR,
             symbol=symbol,
             interval=interval,
+            parameters=parameters,
         )
         return RSISignalRule(config)
 
     @staticmethod
-    def create_trend_rule(symbol: str, interval: str) -> TrendAnalysisRule:
+    def create_trend_rule(symbol: str, interval: str, **parameters) -> TrendAnalysisRule:
         config = RuleConfig(
             name=RuleNames.TREND_ANALYSIS,
             rule_type=RuleType.TECHNICAL_INDICATOR,
             symbol=symbol,
             interval=interval,
+            parameters=parameters,
         )
         return TrendAnalysisRule(config)
 
     @staticmethod
-    def create_new_high_low_rule(symbol: str, interval: str) -> NewHighLowRule:
+    def create_new_high_low_rule(symbol: str, interval: str, **parameters) -> NewHighLowRule:
         config = RuleConfig(
             name=RuleNames.NEW_HIGH_LOW,
             rule_type=RuleType.PRICE_BASED,
             symbol=symbol,
             interval=interval,
+            parameters=parameters,
         )
         return NewHighLowRule(config)
 
     @staticmethod
-    def create_macd_rule(symbol: str, interval: str) -> MACDGoldenCrossRule:
+    def create_macd_rule(symbol: str, interval: str, **parameters) -> MACDGoldenCrossRule:
         config = RuleConfig(
             name=RuleNames.MACD_GOLDEN_CROSS,
             rule_type=RuleType.TECHNICAL_INDICATOR,
             symbol=symbol,
             interval=interval,
+            parameters=parameters,
         )
         return MACDGoldenCrossRule(config)
 
     @staticmethod
     def create_custom_rule(
-        symbol: str, interval: str, name: str, evaluator: Callable
+        symbol: str, interval: str, name: str, evaluator: Callable, **parameters
     ) -> CustomRule:
+        parameters = dict(parameters)
+        parameters["evaluator"] = evaluator
         config = RuleConfig(
             name=name,
             rule_type=RuleType.CUSTOM,
             symbol=symbol,
             interval=interval,
-            parameters={"evaluator": evaluator},
+            parameters=parameters,
         )
         return CustomRule(config)

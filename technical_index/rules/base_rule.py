@@ -40,18 +40,13 @@ class SignalResult:
     )  # 额外的信号信息列表，包含其他相关信号
     metadata: Dict[str, Any] = field(default_factory=dict)  # 元数据字典，存储规则特定的额外信息
 
-    def price_change(self, price: float) -> float:
-        if price is None or self.current_price == 0:
-            return 0.0
-        change_percent = ((price - self.current_price) / self.current_price) * 100
-        return change_percent
+    def format_price_change(self, compare: float, origin: Optional[float] = None) -> str:
+        if origin is None:
+            origin = self.current_price
 
-    def format_price_change(self, price: float, precision: int = 4) -> str:
-        if price is None:
-            return "N/A"
-        change_percent = self.price_change(price)
+        change_percent = ((compare - origin) / origin) * 100
         change_sign = "+" if change_percent >= 0 else ""
-        return f"{price:.{precision}f} ({change_sign}{change_percent:.2f}%)"
+        return f"{compare:.{4}f} ({change_sign}{change_percent:.2f}%)"
 
 
 @dataclass

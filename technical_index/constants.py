@@ -7,7 +7,6 @@
 
 # 配置文件相关常量
 DEFAULT_CONFIG_FILE = "config/monitor_config.json"
-DEFAULT_SIGNAL_FILE = "log/signals.json"
 
 
 # 规则名称常量（英文）
@@ -39,18 +38,3 @@ DEFAULT_LOG_LEVEL = "INFO"
 
 # 默认交易对
 DEFAULT_SYMBOLS = ["BTCUSDT", "ETHUSDT"]
-
-
-# 文件路径常量
-def get_config_file_path(config_file: str = None) -> str:
-    """获取配置文件路径"""
-    if config_file:
-        return config_file
-    return DEFAULT_CONFIG_FILE
-
-
-def get_signal_file_path(signal_file: str = None) -> str:
-    """获取信号文件路径"""
-    if signal_file:
-        return signal_file
-    return DEFAULT_SIGNAL_FILE
