@@ -11,9 +11,9 @@ import pandas as pd
 
 from technical_index.binance import get_futures_market_data
 from technical_index.index import (
-    build_indicator_parameters,
     build_quantitative_analysis,
     get_available_indicators,
+    get_indicator_info,
 )
 
 # 过滤pandas警告
@@ -89,8 +89,8 @@ def demonstrate_basic_usage():
     print("\n前5行数据:")
     print(df.head())
 
-    # 计算技术指标（使用默认参数）
-    df_with_indicators = build_quantitative_analysis(df)
+    # 计算技术指标（指定需要的指标）
+    df_with_indicators = build_quantitative_analysis(df, ["rsi", "macd", "atr", "bbands", "sma"])
     print(f"\n添加技术指标后数据形状: {df_with_indicators.shape}")
 
     # 显示新增的技术指标列
@@ -115,14 +115,6 @@ def demonstrate_custom_parameters():
     # 获取ETHUSDT数据
     df = get_ethusdt_data()
 
-    # 获取默认参数
-    default_params = build_indicator_parameters()
-    print("默认参数示例:")
-    print(f"  移动平均线周期: {default_params['ma_periods']}")
-    print(f"  RSI周期: {default_params['rsi_length']}")
-    print(f"  MACD快线周期: {default_params['macd_fast']}")
-    print(f"  布林带周期: {default_params['bb_length']}")
-
     # 自定义参数
     custom_params = {
         "ma_periods": (5, 13, 21, 55),  # 自定义移动平均线周期
@@ -134,15 +126,15 @@ def demonstrate_custom_parameters():
         "atr_length": 10,  # 自定义ATR周期
     }
 
-    # 构建最终参数（用户参数覆盖默认参数）
-    final_params = build_indicator_parameters(**custom_params)
-    print("\n最终参数示例:")
-    print(f"  移动平均线周期: {final_params['ma_periods']}")
-    print(f"  RSI周期: {final_params['rsi_length']}")
-    print(f"  MACD快线周期: {final_params['macd_fast']}")
+    print("自定义参数示例:")
+    print(f"  移动平均线周期: {custom_params['ma_periods']}")
+    print(f"  RSI周期: {custom_params['rsi_length']}")
+    print(f"  MACD快线周期: {custom_params['macd_fast']}")
 
     # 计算技术指标（使用自定义参数）
-    df_custom = build_quantitative_analysis(df, **custom_params)
+    df_custom = build_quantitative_analysis(
+        df, ["rsi", "macd", "atr", "bbands", "sma"], **custom_params
+    )
 
     # 显示自定义参数的效果
     print("\n使用自定义参数计算的技术指标:")
@@ -156,11 +148,8 @@ def demonstrate_custom_parameters():
     # 检查自定义移动平均线
     for period in custom_params["ma_periods"]:
         sma_col = f"SMA_{period}"
-        ema_col = f"EMA_{period}"
         if sma_col in df_custom.columns:
             print(f"{sma_col} 最新值: {df_custom[sma_col].iloc[-1]:.2f}")
-        if ema_col in df_custom.columns:
-            print(f"{ema_col} 最新值: {df_custom[ema_col].iloc[-1]:.2f}")
 
     return df_custom
 
@@ -177,13 +166,21 @@ def demonstrate_indicator_categories():
         for indicator in indicator_list:
             print(f"  - {indicator}")
 
-    # 获取默认参数
-    params = build_indicator_parameters()
-    print(f"\n可配置的参数数量: {len(params)}")
-    print("部分参数示例:")
-    for i, (param, value) in enumerate(params.items()):
-        if i < 10:
-            print(f"  {param}: {value}")
+    # 演示获取指标信息
+    print("\n=== 指标信息示例 ===")
+    rsi_info = get_indicator_info("rsi")
+    if rsi_info:
+        print("RSI指标信息:")
+        print(f"  名称: {rsi_info['name']}")
+        print(f"  描述: {rsi_info['description']}")
+        print(f"  参数: {rsi_info['parameters']}")
+
+    macd_info = get_indicator_info("macd")
+    if macd_info:
+        print("MACD指标信息:")
+        print(f"  名称: {macd_info['name']}")
+        print(f"  描述: {macd_info['description']}")
+        print(f"  参数: {macd_info['parameters']}")
 
 
 def main():
@@ -203,10 +200,12 @@ def main():
     print("\n" + "=" * 50)
     print("示例完成！")
     print("\n使用说明:")
-    print("1. 基本使用: build_quantitative_analysis(df)")
-    print("2. 自定义参数: build_quantitative_analysis(df, ma_periods=(5,13,21), rsi_length=21)")
+    print("1. 基本使用: build_quantitative_analysis(df, ['rsi', 'macd', 'atr'])")
+    print(
+        "2. 自定义参数: build_quantitative_analysis(df, ['rsi', 'macd'], rsi_length=21, macd_fast=8)"
+    )
     print("3. 获取可用指标: get_available_indicators()")
-    print("4. 构建参数: build_indicator_parameters(ma_periods=(5,13,21), rsi_length=21)")
+    print("4. 获取指标信息: get_indicator_info('rsi')")
 
 
 if __name__ == "__main__":

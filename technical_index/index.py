@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """
-技术指标计算模块
-提供全面的技术分析指标计算功能
+技术指标计算模块 - 重构版
+提供高性能、精确的技术分析指标计算功能
 """
 
 import logging
 import warnings
+from typing import List, Dict, Any, Optional, Union
 
 import pandas as pd
 import pandas_ta as ta
@@ -19,619 +20,695 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def build_quantitative_analysis(df, indicators=None, **kwargs):
+# 指标映射配置
+INDICATOR_MAPPING = {
+    # 动量指标
+    "macd": {"function": "macd", "params": ["macd_fast", "macd_slow", "macd_signal"]},
+    "rsi": {"function": "rsi", "params": ["rsi_length"]},
+    "stoch": {"function": "stoch", "params": ["stoch_k", "stoch_d", "stoch_smooth_k"]},
+    "willr": {"function": "willr", "params": ["willr_length"]},
+    "cci": {"function": "cci", "params": ["cci_length"]},
+    "roc": {"function": "roc", "params": ["roc_length"]},
+    "mom": {"function": "mom", "params": ["mom_length"]},
+    "trix": {"function": "trix", "params": ["trix_length"]},
+    "tsi": {"function": "tsi", "params": ["tsi_fast", "tsi_slow"]},
+    "kdj": {"function": "kdj", "params": ["kdj_length"]},
+    "fisher": {"function": "fisher", "params": ["fisher_length"]},
+    "coppock": {"function": "coppock", "params": ["coppock_length"]},
+    "uo": {"function": "uo", "params": ["uo_length1", "uo_length2", "uo_length3"]},
+    # 重叠指标
+    "sma": {"function": "sma", "params": ["ma_periods"], "custom": True},
+    "ema": {"function": "ema", "params": ["ma_periods"], "custom": True},
+    "dema": {"function": "dema", "params": ["dema_length"]},
+    "tema": {"function": "tema", "params": ["tema_length"]},
+    "hma": {"function": "hma", "params": ["hma_length"]},
+    "wma": {"function": "wma", "params": ["wma_length"]},
+    "kama": {"function": "kama", "params": ["kama_length", "kama_pow1", "kama_pow2"]},
+    "vwap": {"function": "vwap", "params": []},
+    "ichimoku": {"function": "ichimoku", "params": []},
+    "supertrend": {
+        "function": "supertrend",
+        "params": ["supertrend_length", "supertrend_multiplier"],
+    },
+    # 趋势指标
+    "adx": {"function": "adx", "params": ["adx_length"]},
+    "aroon": {"function": "aroon", "params": ["aroon_length"]},
+    "psar": {"function": "psar", "params": ["psar_af0", "psar_af", "psar_max_af"]},
+    "vortex": {"function": "vortex", "params": ["vortex_length"]},
+    "vhf": {"function": "vhf", "params": ["vhf_length"]},
+    "chop": {"function": "chop", "params": ["chop_length"]},
+    "ttm_trend": {"function": "ttm_trend", "params": ["ttm_length"]},
+    # 波动率指标
+    "bbands": {"function": "bbands", "params": ["bb_length", "bb_std"]},
+    "atr": {"function": "atr", "params": ["atr_length"]},
+    "natr": {"function": "natr", "params": ["natr_length"]},
+    "keltner": {"function": "keltner", "params": ["kc_length", "kc_std"]},
+    "donchian": {"function": "donchian", "params": ["dc_length"]},
+    "massi": {"function": "massi", "params": ["mi_length"]},
+    "ui": {"function": "ui", "params": ["ui_length"]},
+    # 成交量指标
+    "obv": {"function": "obv", "params": []},
+    "mfi": {"function": "mfi", "params": ["mfi_length"]},
+    "ad": {"function": "ad", "params": []},
+    "adosc": {"function": "adosc", "params": ["adosc_fast", "adosc_slow"]},
+    "cmf": {"function": "cmf", "params": ["cmf_length"]},
+    "eom": {"function": "eom", "params": ["eom_length"]},
+    "pvi": {"function": "pvi", "params": []},
+    "nvi": {"function": "nvi", "params": []},
+    # 统计指标
+    "zscore": {"function": "zscore", "params": ["zscore_length"]},
+    "kurtosis": {"function": "kurtosis", "params": ["kurtosis_length"]},
+    "skew": {"function": "skew", "params": ["skew_length"]},
+    "variance": {"function": "variance", "params": ["variance_length"]},
+    "entropy": {"function": "entropy", "params": ["entropy_length"]},
+    "quantile": {"function": "quantile", "params": ["quantile_length", "quantile_q"]},
+    # K线模式
+    "cdl_pattern": {"function": "cdl_pattern", "params": ["cdl_pattern_name"]},
+    "cdl_doji": {"function": "cdl_doji", "params": []},
+    "cdl_hammer": {"function": "cdl_hammer", "params": []},
+    "cdl_shooting_star": {"function": "cdl_shooting_star", "params": []},
+    "cdl_engulfing": {"function": "cdl_engulfing", "params": []},
+    "cdl_harami": {"function": "cdl_harami", "params": []},
+    "cdl_marubozu": {"function": "cdl_marubozu", "params": []},
+    "cdl_morning_star": {"function": "cdl_morning_star", "params": []},
+    "cdl_evening_star": {"function": "cdl_evening_star", "params": []},
+    "cdl_three_white_soldiers": {"function": "cdl_three_white_soldiers", "params": []},
+    "cdl_three_black_crows": {"function": "cdl_three_black_crows", "params": []},
+}
+
+
+def build_quantitative_analysis(
+    df: pd.DataFrame, indicators: Union[str, List[str]], **kwargs
+) -> Optional[pd.DataFrame]:
     """
-    在DataFrame上计算技术指标
+    高性能技术指标计算函数
 
     Args:
         df: 包含OHLCV数据的DataFrame
-        indicators: 要计算的指标列表，如果为None则计算所有指标
-            支持的指标类型:
-            ['momentum', 'overlap', 'trend', 'volatility', 'volume', 'statistics', 'candlestick']
-            或者具体的指标名称:
-            ['macd', 'rsi', 'sma', 'ema', 'bbands', 'atr', 'obv', 'mfi', ...]
-        **kwargs: 技术指标参数，包括ma_periods等
-
-    Returns:
-        添加了技术指标的DataFrame
-    """
-    if df is None or df.empty:
-        return None
-
-    # 如果没有指定指标，计算所有指标
-    if indicators is None:
-        df = calculate_momentum_indicators(df, **kwargs)
-        df = calculate_overlap_indicators(df, **kwargs)
-        df = calculate_trend_indicators(df, **kwargs)
-        df = calculate_volatility_indicators(df, **kwargs)
-        df = calculate_volume_indicators(df, **kwargs)
-        df = calculate_statistics_indicators(df, **kwargs)
-        df = calculate_candlestick_patterns(df, **kwargs)
-    else:
-        # 根据指定的指标类型计算
-        if isinstance(indicators, str):
-            indicators = [indicators]
-
-        # 指标类型映射
-        indicator_groups = {
-            "momentum": calculate_momentum_indicators,
-            "overlap": calculate_overlap_indicators,
-            "trend": calculate_trend_indicators,
-            "volatility": calculate_volatility_indicators,
-            "volume": calculate_volume_indicators,
-            "statistics": calculate_statistics_indicators,
-            "candlestick": calculate_candlestick_patterns,
-        }
-
-        # 计算指定的指标组
-        for indicator in indicators:
-            if indicator in indicator_groups:
-                df = indicator_groups[indicator](df, **kwargs)
-            else:
-                # 如果是具体指标名称，计算对应的指标组
-                if indicator in [
-                    "macd",
-                    "rsi",
-                    "stoch",
-                    "willr",
-                    "cci",
-                    "roc",
-                    "mom",
-                    "trix",
-                    "tsi",
-                    "kdj",
-                    "fisher",
-                    "coppock",
-                    "uo",
-                ]:
-                    df = calculate_momentum_indicators(df, **kwargs)
-                elif indicator in [
-                    "sma",
-                    "ema",
-                    "dema",
-                    "tema",
-                    "hma",
-                    "wma",
-                    "kama",
-                    "vwap",
-                    "ichimoku",
-                    "supertrend",
-                ]:
-                    df = calculate_overlap_indicators(df, **kwargs)
-                elif indicator in ["adx", "aroon", "psar", "vortex", "vhf", "chop", "ttm_trend"]:
-                    df = calculate_trend_indicators(df, **kwargs)
-                elif indicator in ["bbands", "atr", "natr", "keltner", "donchian", "massi", "ui"]:
-                    df = calculate_volatility_indicators(df, **kwargs)
-                elif indicator in [
-                    "mfi",
-                    "obv",
-                    "ad",
-                    "adosc",
-                    "cmf",
-                    "eom",
-                    "pvi",
-                    "nvi",
-                    "taker_buy",
-                ]:
-                    df = calculate_volume_indicators(df, **kwargs)
-                elif indicator in [
-                    "zscore",
-                    "kurtosis",
-                    "skew",
-                    "variance",
-                    "stdev",
-                    "median",
-                    "mad",
-                ]:
-                    df = calculate_statistics_indicators(df, **kwargs)
-                elif indicator in ["cdl_patterns"]:
-                    df = calculate_candlestick_patterns(df, **kwargs)
-
-    return df
-
-
-def calculate_momentum_indicators(df, **kwargs):
-    """
-    计算动量指标 - 用于衡量价格变化的速度和强度
-    """
-
-    # MACD (移动平均收敛发散) - 趋势跟踪动量指标
-    # 用途：识别趋势变化、买卖信号
-    macd_fast = kwargs.get("macd_fast", 12)
-    macd_slow = kwargs.get("macd_slow", 26)
-    macd_signal = kwargs.get("macd_signal", 9)
-    df.ta.macd(fast=macd_fast, slow=macd_slow, signal=macd_signal, append=True)
-
-    # RSI (相对强弱指数) - 超买超卖指标
-    # 用途：识别超买超卖区域，寻找反转信号
-    rsi_length = kwargs.get("rsi_length", 14)
-    df.ta.rsi(length=rsi_length, append=True)
-
-    # Stochastic (随机指标) - 动量振荡器
-    # 用途：识别超买超卖，寻找背离信号
-    stoch_k = kwargs.get("stoch_k", 14)
-    stoch_d = kwargs.get("stoch_d", 3)
-    stoch_smooth_k = kwargs.get("stoch_smooth_k", 3)
-    df.ta.stoch(k=stoch_k, d=stoch_d, smooth_k=stoch_smooth_k, append=True)
-
-    # Williams %R - 超买超卖指标
-    # 用途：识别超买超卖区域
-    willr_length = kwargs.get("willr_length", 14)
-    df.ta.willr(length=willr_length, append=True)
-
-    # CCI (商品通道指数) - 价格偏离度指标
-    # 用途：识别超买超卖，寻找反转信号
-    cci_length = kwargs.get("cci_length", 20)
-    df.ta.cci(length=cci_length, append=True)
-
-    # ROC (变化率) - 价格变化速度指标
-    # 用途：衡量价格变化速度，识别动量
-    roc_length = kwargs.get("roc_length", 10)
-    df.ta.roc(length=roc_length, append=True)
-
-    # Momentum (动量) - 价格动量指标
-    # 用途：衡量价格变化幅度
-    mom_length = kwargs.get("mom_length", 10)
-    df.ta.mom(length=mom_length, append=True)
-
-    # TRIX - 三重指数平滑移动平均
-    # 用途：过滤价格噪音，识别趋势
-    trix_length = kwargs.get("trix_length", 18)
-    df.ta.trix(length=trix_length, append=True)
-
-    # TSI (真实强度指数) - 双重平滑动量指标
-    # 用途：识别趋势变化，减少噪音
-    tsi_fast = kwargs.get("tsi_fast", 13)
-    tsi_slow = kwargs.get("tsi_slow", 25)
-    df.ta.tsi(fast=tsi_fast, slow=tsi_slow, append=True)
-
-    # KDJ - 随机指标组合
-    # 用途：综合超买超卖和趋势信号
-    kdj_length = kwargs.get("kdj_length", 9)
-    df.ta.kdj(length=kdj_length, append=True)
-
-    # Fisher Transform - 价格正态化指标
-    # 用途：将价格转换为正态分布，便于分析
-    fisher_length = kwargs.get("fisher_length", 9)
-    df.ta.fisher(length=fisher_length, append=True)
-
-    # Coppock Curve - 长期动量指标
-    # 用途：识别长期底部，适用于股票市场
-    coppock_length = kwargs.get("coppock_length", 10)
-    df.ta.coppock(length=coppock_length, append=True)
-
-    # Ultimate Oscillator - 终极振荡器
-    # 用途：综合多个时间框架的动量
-    uo_length1 = kwargs.get("uo_length1", 7)
-    uo_length2 = kwargs.get("uo_length2", 14)
-    uo_length3 = kwargs.get("uo_length3", 28)
-    df.ta.uo(length1=uo_length1, length2=uo_length2, length3=uo_length3, append=True)
-
-    return df
-
-
-def calculate_overlap_indicators(df, **kwargs):
-    """
-    计算重叠指标 - 移动平均线和价格重叠指标
-    """
-
-    # 获取ma_periods参数，默认为(7, 25, 99)
-    ma_periods = kwargs.get("ma_periods", (7, 25, 99))
-
-    # 计算SMA (简单移动平均线)
-    # 用途：识别趋势方向，支撑阻力位
-    for period in ma_periods:
-        df[f"SMA_{period}"] = df["Close"].rolling(window=period).mean()
-
-    # 计算EMA (指数移动平均线)
-    # 用途：对近期价格更敏感的趋势指标
-    for period in ma_periods:
-        df[f"EMA_{period}"] = ta.ema(df["Close"], length=period)
-
-    # DEMA (双重指数移动平均线)
-    # 用途：减少滞后，更快响应价格变化
-    dema_length = kwargs.get("dema_length", 20)
-    df.ta.dema(length=dema_length, append=True)
-
-    # TEMA (三重指数移动平均线)
-    # 用途：进一步减少滞后，更平滑的趋势线
-    tema_length = kwargs.get("tema_length", 20)
-    df.ta.tema(length=tema_length, append=True)
-
-    # HMA (赫尔移动平均线)
-    # 用途：减少滞后同时保持平滑
-    hma_length = kwargs.get("hma_length", 20)
-    df.ta.hma(length=hma_length, append=True)
-
-    # WMA (加权移动平均线)
-    # 用途：对近期数据给予更高权重
-    wma_length = kwargs.get("wma_length", 20)
-    df.ta.wma(length=wma_length, append=True)
-
-    # KAMA (考夫曼自适应移动平均线)
-    # 用途：根据市场波动性自适应调整
-    kama_length = kwargs.get("kama_length", 10)
-    df.ta.kama(length=kama_length, append=True)
-
-    # VWAP (成交量加权平均价格)
-    # 用途：日内交易的重要参考价格
-    df.ta.vwap(append=True)
-
-    # Ichimoku (一目均衡表)
-    # 用途：综合趋势、支撑阻力、动量指标
-    ichimoku_tenkan = kwargs.get("ichimoku_tenkan", 9)
-    ichimoku_kijun = kwargs.get("ichimoku_kijun", 26)
-    ichimoku_senkou = kwargs.get("ichimoku_senkou", 52)
-    df.ta.ichimoku(
-        tenkan=ichimoku_tenkan,
-        kijun=ichimoku_kijun,
-        senkou=ichimoku_senkou,
-        append=True,
-    )
-
-    # SuperTrend - 趋势跟踪指标
-    # 用途：动态支撑阻力，趋势跟踪
-    supertrend_period = kwargs.get("supertrend_period", 10)
-    supertrend_multiplier = kwargs.get("supertrend_multiplier", 3.0)
-    df.ta.supertrend(period=supertrend_period, multiplier=supertrend_multiplier, append=True)
-
-    return df
-
-
-def calculate_trend_indicators(df, **kwargs):
-    """
-    计算趋势指标 - 用于识别和确认趋势方向
-    """
-
-    # ADX (平均方向指数) - 趋势强度指标
-    # 用途：衡量趋势强度，判断是否适合趋势交易
-    adx_length = kwargs.get("adx_length", 14)
-    df.ta.adx(length=adx_length, append=True)
-
-    # Aroon - 趋势强度和方向指标
-    # 用途：识别趋势开始和结束，衡量趋势强度
-    aroon_length = kwargs.get("aroon_length", 25)
-    df.ta.aroon(length=aroon_length, append=True)
-
-    # PSAR (抛物线转向) - 趋势跟踪指标
-    # 用途：动态止损，趋势跟踪
-    psar_af0 = kwargs.get("psar_af0", 0.02)
-    psar_af = kwargs.get("psar_af", 0.02)
-    psar_max_af = kwargs.get("psar_max_af", 0.2)
-    df.ta.psar(af0=psar_af0, af=psar_af, max_af=psar_max_af, append=True)
-
-    # Vortex - 涡旋指标
-    # 用途：识别趋势开始和结束
-    vortex_length = kwargs.get("vortex_length", 14)
-    df.ta.vortex(length=vortex_length, append=True)
-
-    # VHF (垂直水平过滤器) - 趋势/震荡市场识别
-    # 用途：判断市场是趋势还是震荡
-    vhf_length = kwargs.get("vhf_length", 28)
-    df.ta.vhf(length=vhf_length, append=True)
-
-    # Choppiness - 市场震荡程度指标
-    # 用途：判断市场是否处于震荡状态
-    chop_length = kwargs.get("chop_length", 14)
-    df.ta.chop(length=chop_length, append=True)
-
-    # TTM Trend - TTM趋势指标
-    # 用途：简化趋势判断
-    ttm_length = kwargs.get("ttm_length", 5)
-    df.ta.ttm_trend(length=ttm_length, append=True)
-
-    return df
-
-
-def calculate_volatility_indicators(df, **kwargs):
-    """
-    计算波动率指标 - 用于衡量价格波动程度
-    """
-
-    # Bollinger Bands (布林带) - 波动率通道
-    # 用途：识别超买超卖，判断波动率
-    bb_length = kwargs.get("bb_length", 20)
-    bb_std = kwargs.get("bb_std", 2)
-    df.ta.bbands(length=bb_length, std=bb_std, append=True)
-
-    # ATR (平均真实波幅) - 波动率指标
-    # 用途：设置止损，判断市场波动性
-    atr_length = kwargs.get("atr_length", 14)
-    df.ta.atr(length=atr_length, append=True)
-
-    # NATR (归一化平均真实波幅)
-    # 用途：标准化波动率，便于比较
-    natr_length = kwargs.get("natr_length", 14)
-    df.ta.natr(length=natr_length, append=True)
-
-    # Keltner Channel - 基于ATR的通道
-    # 用途：动态支撑阻力，波动率通道
-    kc_length = kwargs.get("kc_length", 20)
-    kc_std = kwargs.get("kc_std", 2)
-    df.ta.kc(length=kc_length, std=kc_std, append=True)
-
-    # Donchian Channel - 极值通道
-    # 用途：识别支撑阻力，突破交易
-    dc_length = kwargs.get("dc_length", 20)
-    df.ta.donchian(length=dc_length, append=True)
-
-    # Mass Index - 质量指数
-    # 用途：识别反转信号
-    mi_length = kwargs.get("mi_length", 9)
-    df.ta.massi(length=mi_length, append=True)
-
-    # Ulcer Index - 溃疡指数
-    # 用途：衡量下行风险
-    ui_length = kwargs.get("ui_length", 14)
-    df.ta.ui(length=ui_length, append=True)
-
-    return df
-
-
-def calculate_volume_indicators(df, **kwargs):
-    """
-    计算成交量指标 - 用于分析成交量与价格的关系
-    """
-
-    # OBV (能量潮) - 成交量累积指标
-    # 用途：确认价格趋势，识别背离
-    df.ta.obv(append=True)
-
-    # MFI (资金流量指数) - 成交量加权RSI
-    # 用途：结合价格和成交量的超买超卖指标
-    mfi_length = kwargs.get("mfi_length", 14)
-    df.ta.mfi(length=mfi_length, append=True)
-
-    # AD (累积/派发线) - 资金流向指标
-    # 用途：判断资金流入流出
-    df.ta.ad(append=True)
-
-    # ADOSC (累积/派发振荡器)
-    # 用途：资金流向的振荡器版本
-    adosc_fast = kwargs.get("adosc_fast", 3)
-    adosc_slow = kwargs.get("adosc_slow", 10)
-    df.ta.adosc(fast=adosc_fast, slow=adosc_slow, append=True)
-
-    # CMF (钱德动量流量) - 资金流量指标
-    # 用途：衡量资金流入流出的强度
-    cmf_length = kwargs.get("cmf_length", 20)
-    df.ta.cmf(length=cmf_length, append=True)
-
-    # EOM (易变动量) - 价格和成交量的关系
-    # 用途：判断价格变动与成交量的关系
-    eom_length = kwargs.get("eom_length", 14)
-    df.ta.eom(length=eom_length, append=True)
-
-    # VWAP (成交量加权平均价格)
-    # 用途：日内交易的重要参考价格
-    df.ta.vwap(append=True)
-
-    # PVI (正成交量指数)
-    # 用途：只在成交量增加时累积价格变化
-    df.ta.pvi(append=True)
-
-    # NVI (负成交量指数)
-    # 用途：只在成交量减少时累积价格变化
-    df.ta.nvi(append=True)
-
-    return df
-
-
-def calculate_statistics_indicators(df, **kwargs):
-    """
-    计算统计指标 - 用于价格数据的统计分析
-    """
-
-    # Z-Score - 标准化分数
-    # 用途：判断价格偏离程度
-    zscore_length = kwargs.get("zscore_length", 20)
-    df.ta.zscore(length=zscore_length, append=True)
-
-    # Kurtosis - 峰度
-    # 用途：衡量价格分布的尖峭程度
-    kurtosis_length = kwargs.get("kurtosis_length", 20)
-    df.ta.kurtosis(length=kurtosis_length, append=True)
-
-    # Skew - 偏度
-    # 用途：衡量价格分布的偏斜程度
-    skew_length = kwargs.get("skew_length", 20)
-    df.ta.skew(length=skew_length, append=True)
-
-    # Variance - 方差
-    # 用途：衡量价格波动性
-    variance_length = kwargs.get("variance_length", 20)
-    df.ta.variance(length=variance_length, append=True)
-
-    # Standard Deviation - 标准差
-    # 用途：衡量价格分散程度
-    stdev_length = kwargs.get("stdev_length", 20)
-    df.ta.stdev(length=stdev_length, append=True)
-
-    # Median - 中位数
-    # 用途：价格的中心趋势
-    median_length = kwargs.get("median_length", 20)
-    df.ta.median(length=median_length, append=True)
-
-    # MAD (平均绝对偏差)
-    # 用途：衡量价格偏离中位数的程度
-    mad_length = kwargs.get("mad_length", 20)
-    df.ta.mad(length=mad_length, append=True)
-
-    return df
-
-
-def calculate_candlestick_patterns(df, **kwargs):
-    """
-    计算K线形态 - 用于识别经典的K线形态
-    """
-
-    # 计算所有K线形态
-    # 用途：识别经典的反转和持续形态
-    df.ta.cdl_pattern(name="all", append=True)
-
-    # 计算Heikin-Ashi K线
-    # 用途：平滑价格数据，更容易识别趋势
-    df.ta.ha(append=True)
-
-    return df
-
-
-def get_available_indicators():
-    """
-    获取所有可用的技术指标列表
-
-    Returns:
-        dict: 按分类组织的技术指标字典
-    """
-    return {
-        "momentum": [
-            "MACD",
-            "RSI",
-            "Stochastic",
-            "Williams %R",
-            "CCI",
-            "ROC",
-            "Momentum",
-            "TRIX",
-            "TSI",
-            "KDJ",
-            "Fisher Transform",
-            "Coppock Curve",
-            "Ultimate Oscillator",
-        ],
-        "overlap": [
-            "SMA",
-            "EMA",
-            "DEMA",
-            "TEMA",
-            "HMA",
-            "WMA",
-            "KAMA",
-            "VWAP",
-            "Ichimoku",
-            "SuperTrend",
-        ],
-        "trend": ["ADX", "Aroon", "PSAR", "Vortex", "VHF", "Choppiness", "TTM Trend"],
-        "volatility": [
-            "Bollinger Bands",
-            "ATR",
-            "NATR",
-            "Keltner Channel",
-            "Donchian Channel",
-            "Mass Index",
-            "Ulcer Index",
-        ],
-        "volume": ["OBV", "MFI", "AD", "ADOSC", "CMF", "EOM", "PVI", "NVI"],
-        "statistics": [
-            "Z-Score",
-            "Kurtosis",
-            "Skew",
-            "Variance",
-            "Standard Deviation",
-            "Median",
-            "MAD",
-        ],
-        "candlestick": ["CDL Patterns", "Heikin-Ashi"],
-    }
-
-
-def build_indicator_parameters(**kwargs):
-    """
-    根据用户自定义参数构建技术指标参数字典
-
-    Args:
+        indicators: 要计算的指标列表，支持具体指标名称
         **kwargs: 技术指标参数
 
     Returns:
-        dict: 技术指标参数字典，包含所有可配置的参数及其默认值
+        添加了技术指标的DataFrame，如果计算失败返回None
+
+    Examples:
+        # 计算单个指标
+        df = build_quantitative_analysis(df, "rsi", rsi_length=14)
+
+        # 计算多个指标
+        df = build_quantitative_analysis(df, ["rsi", "macd", "atr"],
+                                       rsi_length=14, macd_fast=12, macd_slow=26, atr_length=14)
+
+        # 计算移动平均线
+        df = build_quantitative_analysis(df, ["sma", "ema"], ma_periods=(7, 21, 50))
     """
-    params = {
-        # 移动平均线周期参数
-        "ma_periods": (7, 25, 99),  # 移动平均线周期列表，用于计算SMA和EMA
-        # MACD参数
-        "macd_fast": 12,  # MACD快线周期，通常为12
-        "macd_slow": 26,  # MACD慢线周期，通常为26
-        "macd_signal": 9,  # MACD信号线周期，通常为9
-        # RSI参数
-        "rsi_length": 14,  # RSI计算周期，标准为14
-        # 随机指标参数
-        "stoch_k": 14,  # 随机指标%K周期
-        "stoch_d": 3,  # 随机指标%D周期
-        "stoch_smooth_k": 3,  # 随机指标%K平滑周期
-        # Williams %R参数
-        "willr_length": 14,  # Williams %R计算周期
-        # CCI参数
-        "cci_length": 20,  # 商品通道指数计算周期
-        # ROC参数
-        "roc_length": 10,  # 变化率计算周期
-        # 动量参数
-        "mom_length": 10,  # 动量指标计算周期
-        # TRIX参数
-        "trix_length": 18,  # TRIX计算周期
-        # TSI参数
-        "tsi_fast": 13,  # TSI快线周期
-        "tsi_slow": 25,  # TSI慢线周期
-        # KDJ参数
-        "kdj_length": 9,  # KDJ计算周期
-        # Fisher Transform参数
-        "fisher_length": 9,  # Fisher Transform计算周期
-        # Coppock Curve参数
-        "coppock_length": 10,  # Coppock Curve计算周期
-        # Ultimate Oscillator参数
-        "uo_length1": 7,  # 终极振荡器第一周期
-        "uo_length2": 14,  # 终极振荡器第二周期
-        "uo_length3": 28,  # 终极振荡器第三周期
-        # 移动平均线参数
-        "dema_length": 20,  # 双重指数移动平均线周期
-        "tema_length": 20,  # 三重指数移动平均线周期
-        "hma_length": 20,  # 赫尔移动平均线周期
-        "wma_length": 20,  # 加权移动平均线周期
-        "kama_length": 10,  # 考夫曼自适应移动平均线周期
-        # 一目均衡表参数
-        "ichimoku_tenkan": 9,  # 一目均衡表转换线周期
-        "ichimoku_kijun": 26,  # 一目均衡表基准线周期
-        "ichimoku_senkou": 52,  # 一目均衡表先行带周期
-        # SuperTrend参数
-        "supertrend_period": 10,  # SuperTrend周期
-        "supertrend_multiplier": 3.0,  # SuperTrend倍数
-        # 趋势指标参数
-        "adx_length": 14,  # 平均方向指数周期
-        "aroon_length": 25,  # Aroon指标周期
-        # PSAR参数
-        "psar_af0": 0.02,  # PSAR初始加速因子
-        "psar_af": 0.02,  # PSAR加速因子
-        "psar_max_af": 0.2,  # PSAR最大加速因子
-        # 其他趋势指标参数
-        "vortex_length": 14,  # 涡旋指标周期
-        "vhf_length": 28,  # 垂直水平过滤器周期
-        "chop_length": 14,  # 震荡程度指标周期
-        "ttm_length": 5,  # TTM趋势指标周期
-        # 波动率指标参数
-        "bb_length": 20,  # 布林带周期
-        "bb_std": 2,  # 布林带标准差倍数
-        "atr_length": 14,  # 平均真实波幅周期
-        "natr_length": 14,  # 归一化平均真实波幅周期
-        "kc_length": 20,  # Keltner Channel周期
-        "kc_std": 2,  # Keltner Channel标准差倍数
-        "dc_length": 20,  # Donchian Channel周期
-        "mi_length": 9,  # 质量指数周期
-        "ui_length": 14,  # 溃疡指数周期
-        # 成交量指标参数
-        "mfi_length": 14,  # 资金流量指数周期
-        "adosc_fast": 3,  # 累积/派发振荡器快线周期
-        "adosc_slow": 10,  # 累积/派发振荡器慢线周期
-        "cmf_length": 20,  # 钱德动量流量周期
-        "eom_length": 14,  # 易变动量周期
-        # 统计指标参数
-        "zscore_length": 20,  # Z-Score计算周期
-        "kurtosis_length": 20,  # 峰度计算周期
-        "skew_length": 20,  # 偏度计算周期
-        "variance_length": 20,  # 方差计算周期
-        "stdev_length": 20,  # 标准差计算周期
-        "median_length": 20,  # 中位数计算周期
-        "mad_length": 20,  # 平均绝对偏差计算周期
+    if df is None or df.empty:
+        logger.warning("输入数据为空")
+        return None
+
+    # 标准化指标列表
+    if isinstance(indicators, str):
+        indicators = [indicators]
+
+    if not indicators:
+        logger.warning("未指定要计算的指标")
+        return df
+
+    result_df = df.copy()
+    try:
+        # 计算移动平均线（特殊处理）
+        if "sma" in indicators or "ema" in indicators:
+            result_df = _calculate_moving_averages(result_df, indicators, **kwargs)
+
+        # 计算其他指标
+        for indicator in indicators:
+            if indicator in ["sma", "ema"]:
+                continue
+
+            if indicator in INDICATOR_MAPPING:
+                result_df = _calculate_single_indicator(result_df, indicator, **kwargs)
+            else:
+                logger.warning(f"未知指标: {indicator}")
+
+        return result_df
+
+    except Exception as e:
+        logger.error(f"计算技术指标时出错: {e}")
+        return None
+
+
+def _calculate_moving_averages(df: pd.DataFrame, indicators: List[str], **kwargs) -> pd.DataFrame:
+    """计算移动平均线"""
+    ma_periods = kwargs.get("ma_periods", (7, 25, 99))
+
+    if not isinstance(ma_periods, (list, tuple)):
+        ma_periods = [ma_periods]
+
+    for period in ma_periods:
+        if "sma" in indicators:
+            df[f"SMA_{period}"] = df["Close"].rolling(window=period).mean()
+
+        if "ema" in indicators:
+            df[f"EMA_{period}"] = ta.ema(df["Close"], length=period)
+
+    return df
+
+
+def _calculate_single_indicator(df: pd.DataFrame, indicator: str, **kwargs) -> pd.DataFrame:
+    """计算单个技术指标"""
+    if indicator not in INDICATOR_MAPPING:
+        logger.warning(f"未知指标: {indicator}")
+        return df
+
+    config = INDICATOR_MAPPING[indicator]
+    function_name = config["function"]
+    params = config["params"]
+
+    try:
+        # 获取参数值
+        param_values = {}
+        for param in params:
+            if param in kwargs:
+                param_values[param] = kwargs[param]
+            else:
+                # 使用默认值
+                param_values[param] = _get_default_param_value(param)
+
+        # 执行指标计算
+        if function_name == "macd":
+            df.ta.macd(
+                fast=param_values.get("macd_fast", 12),
+                slow=param_values.get("macd_slow", 26),
+                signal=param_values.get("macd_signal", 9),
+                append=True,
+            )
+
+        elif function_name == "rsi":
+            df.ta.rsi(length=param_values.get("rsi_length", 14), append=True)
+
+        elif function_name == "stoch":
+            df.ta.stoch(
+                k=param_values.get("stoch_k", 14),
+                d=param_values.get("stoch_d", 3),
+                smooth_k=param_values.get("stoch_smooth_k", 3),
+                append=True,
+            )
+
+        elif function_name == "willr":
+            df.ta.willr(length=param_values.get("willr_length", 14), append=True)
+
+        elif function_name == "cci":
+            df.ta.cci(length=param_values.get("cci_length", 20), append=True)
+
+        elif function_name == "roc":
+            df.ta.roc(length=param_values.get("roc_length", 10), append=True)
+
+        elif function_name == "mom":
+            df.ta.mom(length=param_values.get("mom_length", 10), append=True)
+
+        elif function_name == "trix":
+            df.ta.trix(length=param_values.get("trix_length", 18), append=True)
+
+        elif function_name == "tsi":
+            df.ta.tsi(
+                fast=param_values.get("tsi_fast", 13),
+                slow=param_values.get("tsi_slow", 25),
+                append=True,
+            )
+
+        elif function_name == "kdj":
+            df.ta.kdj(length=param_values.get("kdj_length", 9), append=True)
+
+        elif function_name == "fisher":
+            df.ta.fisher(length=param_values.get("fisher_length", 9), append=True)
+
+        elif function_name == "coppock":
+            df.ta.coppock(length=param_values.get("coppock_length", 10), append=True)
+
+        elif function_name == "uo":
+            df.ta.uo(
+                length1=param_values.get("uo_length1", 7),
+                length2=param_values.get("uo_length2", 14),
+                length3=param_values.get("uo_length3", 28),
+                append=True,
+            )
+
+        elif function_name == "dema":
+            df.ta.dema(length=param_values.get("dema_length", 20), append=True)
+
+        elif function_name == "tema":
+            df.ta.tema(length=param_values.get("tema_length", 20), append=True)
+
+        elif function_name == "hma":
+            df.ta.hma(length=param_values.get("hma_length", 20), append=True)
+
+        elif function_name == "wma":
+            df.ta.wma(length=param_values.get("wma_length", 20), append=True)
+
+        elif function_name == "kama":
+            df.ta.kama(
+                length=param_values.get("kama_length", 10),
+                pow1=param_values.get("kama_pow1", 2),
+                pow2=param_values.get("kama_pow2", 30),
+                append=True,
+            )
+
+        elif function_name == "vwap":
+            df.ta.vwap(append=True)
+
+        elif function_name == "ichimoku":
+            df.ta.ichimoku(append=True)
+
+        elif function_name == "supertrend":
+            df.ta.supertrend(
+                length=param_values.get("supertrend_length", 7),
+                multiplier=param_values.get("supertrend_multiplier", 3.0),
+                append=True,
+            )
+
+        elif function_name == "adx":
+            df.ta.adx(length=param_values.get("adx_length", 14), append=True)
+
+        elif function_name == "aroon":
+            df.ta.aroon(length=param_values.get("aroon_length", 25), append=True)
+
+        elif function_name == "psar":
+            df.ta.psar(
+                af0=param_values.get("psar_af0", 0.02),
+                af=param_values.get("psar_af", 0.02),
+                max_af=param_values.get("psar_max_af", 0.2),
+                append=True,
+            )
+
+        elif function_name == "vortex":
+            df.ta.vortex(length=param_values.get("vortex_length", 14), append=True)
+
+        elif function_name == "vhf":
+            df.ta.vhf(length=param_values.get("vhf_length", 28), append=True)
+
+        elif function_name == "chop":
+            df.ta.chop(length=param_values.get("chop_length", 14), append=True)
+
+        elif function_name == "ttm_trend":
+            df.ta.ttm_trend(length=param_values.get("ttm_length", 5), append=True)
+
+        elif function_name == "bbands":
+            df.ta.bbands(
+                length=param_values.get("bb_length", 20),
+                std=param_values.get("bb_std", 2),
+                append=True,
+            )
+
+        elif function_name == "atr":
+            df.ta.atr(length=param_values.get("atr_length", 14), append=True)
+
+        elif function_name == "natr":
+            df.ta.natr(length=param_values.get("natr_length", 14), append=True)
+
+        elif function_name == "keltner":
+            df.ta.kc(
+                length=param_values.get("kc_length", 20),
+                std=param_values.get("kc_std", 2),
+                append=True,
+            )
+
+        elif function_name == "donchian":
+            df.ta.donchian(length=param_values.get("dc_length", 20), append=True)
+
+        elif function_name == "massi":
+            df.ta.massi(length=param_values.get("mi_length", 9), append=True)
+
+        elif function_name == "ui":
+            df.ta.ui(length=param_values.get("ui_length", 14), append=True)
+
+        elif function_name == "obv":
+            df.ta.obv(append=True)
+
+        elif function_name == "mfi":
+            df.ta.mfi(length=param_values.get("mfi_length", 14), append=True)
+
+        elif function_name == "ad":
+            df.ta.ad(append=True)
+
+        elif function_name == "adosc":
+            df.ta.adosc(
+                fast=param_values.get("adosc_fast", 3),
+                slow=param_values.get("adosc_slow", 10),
+                append=True,
+            )
+
+        elif function_name == "cmf":
+            df.ta.cmf(length=param_values.get("cmf_length", 20), append=True)
+
+        elif function_name == "eom":
+            df.ta.eom(length=param_values.get("eom_length", 14), append=True)
+
+        elif function_name == "pvi":
+            df.ta.pvi(append=True)
+
+        elif function_name == "nvi":
+            df.ta.nvi(append=True)
+
+        elif function_name == "zscore":
+            df.ta.zscore(length=param_values.get("zscore_length", 20), append=True)
+
+        elif function_name == "kurtosis":
+            df.ta.kurtosis(length=param_values.get("kurtosis_length", 20), append=True)
+
+        elif function_name == "skew":
+            df.ta.skew(length=param_values.get("skew_length", 20), append=True)
+
+        elif function_name == "variance":
+            df.ta.variance(length=param_values.get("variance_length", 20), append=True)
+
+        elif function_name == "entropy":
+            df.ta.entropy(length=param_values.get("entropy_length", 20), append=True)
+
+        elif function_name == "quantile":
+            df.ta.quantile(
+                length=param_values.get("quantile_length", 20),
+                q=param_values.get("quantile_q", 0.5),
+                append=True,
+            )
+
+        elif function_name.startswith("cdl_"):
+            _calculate_candlestick_pattern(df, function_name)
+
+        else:
+            logger.warning(f"未实现的指标: {indicator}")
+
+        return df
+
+    except Exception as e:
+        logger.error(f"计算指标 {indicator} 时出错: {e}")
+        return df
+
+
+def _get_default_param_value(param: str) -> Any:
+    """获取参数默认值"""
+    defaults = {
+        "macd_fast": 12,
+        "macd_slow": 26,
+        "macd_signal": 9,
+        "rsi_length": 14,
+        "stoch_k": 14,
+        "stoch_d": 3,
+        "stoch_smooth_k": 3,
+        "willr_length": 14,
+        "cci_length": 20,
+        "roc_length": 10,
+        "mom_length": 10,
+        "trix_length": 18,
+        "tsi_fast": 13,
+        "tsi_slow": 25,
+        "kdj_length": 9,
+        "fisher_length": 9,
+        "coppock_length": 10,
+        "uo_length1": 7,
+        "uo_length2": 14,
+        "uo_length3": 28,
+        "dema_length": 20,
+        "tema_length": 20,
+        "hma_length": 20,
+        "wma_length": 20,
+        "kama_length": 10,
+        "kama_pow1": 2,
+        "kama_pow2": 30,
+        "supertrend_length": 7,
+        "supertrend_multiplier": 3.0,
+        "adx_length": 14,
+        "aroon_length": 25,
+        "psar_af0": 0.02,
+        "psar_af": 0.02,
+        "psar_max_af": 0.2,
+        "vortex_length": 14,
+        "vhf_length": 28,
+        "chop_length": 14,
+        "ttm_length": 5,
+        "bb_length": 20,
+        "bb_std": 2,
+        "atr_length": 14,
+        "natr_length": 14,
+        "kc_length": 20,
+        "kc_std": 2,
+        "dc_length": 20,
+        "mi_length": 9,
+        "ui_length": 14,
+        "mfi_length": 14,
+        "adosc_fast": 3,
+        "adosc_slow": 10,
+        "cmf_length": 20,
+        "eom_length": 14,
+        "zscore_length": 20,
+        "kurtosis_length": 20,
+        "skew_length": 20,
+        "variance_length": 20,
+        "entropy_length": 20,
+        "quantile_length": 20,
+        "quantile_q": 0.5,
     }
 
-    # 更新或添加用户自定义参数
-    params.update(kwargs)
-    return params
+    return defaults.get(param, None)
+
+
+def _calculate_candlestick_pattern(df: pd.DataFrame, pattern_name: str) -> None:
+    """计算K线模式"""
+    try:
+        if pattern_name == "cdl_doji":
+            df.ta.cdl_doji(append=True)
+        elif pattern_name == "cdl_hammer":
+            df.ta.cdl_hammer(append=True)
+        elif pattern_name == "cdl_shooting_star":
+            df.ta.cdl_shooting_star(append=True)
+        elif pattern_name == "cdl_engulfing":
+            df.ta.cdl_engulfing(append=True)
+        elif pattern_name == "cdl_harami":
+            df.ta.cdl_harami(append=True)
+        elif pattern_name == "cdl_marubozu":
+            df.ta.cdl_marubozu(append=True)
+        elif pattern_name == "cdl_morning_star":
+            df.ta.cdl_morning_star(append=True)
+        elif pattern_name == "cdl_evening_star":
+            df.ta.cdl_evening_star(append=True)
+        elif pattern_name == "cdl_three_white_soldiers":
+            df.ta.cdl_three_white_soldiers(append=True)
+        elif pattern_name == "cdl_three_black_crows":
+            df.ta.cdl_three_black_crows(append=True)
+        else:
+            logger.warning(f"未实现的K线模式: {pattern_name}")
+    except Exception as e:
+        logger.error(f"计算K线模式 {pattern_name} 时出错: {e}")
+
+
+def get_available_indicators() -> Dict[str, List[str]]:
+    """
+    获取所有可用的技术指标
+
+    Returns:
+        按类型分组的指标字典
+    """
+    return {
+        "momentum": [
+            "macd",
+            "rsi",
+            "stoch",
+            "willr",
+            "cci",
+            "roc",
+            "mom",
+            "trix",
+            "tsi",
+            "kdj",
+            "fisher",
+            "coppock",
+            "uo",
+        ],
+        "overlap": [
+            "sma",
+            "ema",
+            "dema",
+            "tema",
+            "hma",
+            "wma",
+            "kama",
+            "vwap",
+            "ichimoku",
+            "supertrend",
+        ],
+        "trend": ["adx", "aroon", "psar", "vortex", "vhf", "chop", "ttm_trend"],
+        "volatility": ["bbands", "atr", "natr", "keltner", "donchian", "massi", "ui"],
+        "volume": ["obv", "mfi", "ad", "adosc", "cmf", "eom", "pvi", "nvi"],
+        "statistics": ["zscore", "kurtosis", "skew", "variance", "entropy", "quantile"],
+        "candlestick": [
+            "cdl_doji",
+            "cdl_hammer",
+            "cdl_shooting_star",
+            "cdl_engulfing",
+            "cdl_harami",
+            "cdl_marubozu",
+            "cdl_morning_star",
+            "cdl_evening_star",
+            "cdl_three_white_soldiers",
+            "cdl_three_black_crows",
+        ],
+    }
+
+
+def get_indicator_info(indicator: str) -> Optional[Dict[str, Any]]:
+    """
+    获取指标信息
+
+    Args:
+        indicator: 指标名称
+
+    Returns:
+        指标信息字典，包含参数和描述
+    """
+    if indicator in INDICATOR_MAPPING:
+        config = INDICATOR_MAPPING[indicator]
+        return {
+            "name": indicator,
+            "function": config["function"],
+            "parameters": config["params"],
+            "description": _get_indicator_description(indicator),
+        }
+    return None
+
+
+def _get_indicator_description(indicator: str) -> str:
+    """获取指标描述"""
+    descriptions = {
+        "macd": "移动平均收敛发散 - 趋势跟踪动量指标",
+        "rsi": "相对强弱指数 - 超买超卖指标",
+        "stoch": "随机指标 - 动量振荡器",
+        "willr": "威廉指标 - 超买超卖指标",
+        "cci": "商品通道指数 - 价格偏离度指标",
+        "roc": "变化率 - 价格变化速度指标",
+        "mom": "动量 - 价格动量指标",
+        "trix": "三重指数平滑移动平均 - 过滤价格噪音",
+        "tsi": "真实强度指数 - 双重平滑动量指标",
+        "kdj": "KDJ随机指标组合",
+        "fisher": "Fisher变换 - 价格正态化指标",
+        "coppock": "Coppock曲线 - 长期动量指标",
+        "uo": "终极振荡器 - 综合多个时间框架的动量",
+        "sma": "简单移动平均线 - 基础趋势指标",
+        "ema": "指数移动平均线 - 对近期价格更敏感",
+        "dema": "双重指数移动平均线 - 减少滞后",
+        "tema": "三重指数移动平均线 - 进一步减少滞后",
+        "hma": "赫尔移动平均线 - 加权移动平均",
+        "wma": "加权移动平均线 - 线性加权",
+        "kama": "考夫曼自适应移动平均线 - 自适应平滑",
+        "vwap": "成交量加权平均价格 - 日内交易参考",
+        "ichimoku": "一目均衡表 - 综合趋势指标",
+        "supertrend": "超级趋势 - 趋势跟踪指标",
+        "adx": "平均方向指数 - 趋势强度指标",
+        "aroon": "Aroon指标 - 趋势强度和方向",
+        "psar": "抛物线转向 - 动态止损指标",
+        "vortex": "涡旋指标 - 识别趋势开始和结束",
+        "vhf": "垂直水平过滤器 - 趋势/震荡市场识别",
+        "chop": "震荡指标 - 市场震荡程度",
+        "ttm_trend": "TTM趋势 - 简化趋势判断",
+        "bbands": "布林带 - 波动率通道",
+        "atr": "平均真实波幅 - 波动率指标",
+        "natr": "归一化平均真实波幅 - 标准化波动率",
+        "keltner": "肯特纳通道 - 基于ATR的通道",
+        "donchian": "唐奇安通道 - 极值通道",
+        "massi": "质量指数 - 识别反转信号",
+        "ui": "溃疡指数 - 衡量下行风险",
+        "obv": "能量潮 - 成交量累积指标",
+        "mfi": "资金流量指数 - 成交量加权RSI",
+        "ad": "累积/派发线 - 资金流向指标",
+        "adosc": "累积/派发振荡器 - 资金流向振荡器",
+        "cmf": "钱德动量流量 - 资金流量指标",
+        "eom": "易变动量 - 价格和成交量关系",
+        "pvi": "正成交量指数 - 成交量增加时累积",
+        "nvi": "负成交量指数 - 成交量减少时累积",
+        "zscore": "Z分数 - 标准化分数",
+        "kurtosis": "峰度 - 分布尖峭程度",
+        "skew": "偏度 - 分布不对称程度",
+        "variance": "方差 - 价格波动程度",
+        "entropy": "熵 - 价格序列复杂度",
+        "quantile": "分位数 - 价格分布特征",
+    }
+
+    return descriptions.get(indicator, "技术分析指标")
+
+
+def calculate_momentum_indicators(df, **kwargs):
+    """计算动量指标"""
+    return build_quantitative_analysis(
+        df,
+        [
+            "macd",
+            "rsi",
+            "stoch",
+            "willr",
+            "cci",
+            "roc",
+            "mom",
+            "trix",
+            "tsi",
+            "kdj",
+            "fisher",
+            "coppock",
+            "uo",
+        ],
+        **kwargs,
+    )
+
+
+def calculate_overlap_indicators(df, **kwargs):
+    """计算重叠指标"""
+    return build_quantitative_analysis(
+        df,
+        ["sma", "ema", "dema", "tema", "hma", "wma", "kama", "vwap", "ichimoku", "supertrend"],
+        **kwargs,
+    )
+
+
+def calculate_trend_indicators(df, **kwargs):
+    """计算趋势指标"""
+    return build_quantitative_analysis(
+        df, ["adx", "aroon", "psar", "vortex", "vhf", "chop", "ttm_trend"], **kwargs
+    )
+
+
+def calculate_volatility_indicators(df, **kwargs):
+    """计算波动率指标"""
+    return build_quantitative_analysis(
+        df, ["bbands", "atr", "natr", "keltner", "donchian", "massi", "ui"], **kwargs
+    )
+
+
+def calculate_volume_indicators(df, **kwargs):
+    """计算成交量指标"""
+    return build_quantitative_analysis(
+        df, ["obv", "mfi", "ad", "adosc", "cmf", "eom", "pvi", "nvi"], **kwargs
+    )
+
+
+def calculate_statistics_indicators(df, **kwargs):
+    """计算统计指标"""
+    return build_quantitative_analysis(
+        df, ["zscore", "kurtosis", "skew", "variance", "entropy", "quantile"], **kwargs
+    )
+
+
+def calculate_candlestick_patterns(df, **kwargs):
+    """计算K线模式"""
+    return build_quantitative_analysis(
+        df,
+        [
+            "cdl_doji",
+            "cdl_hammer",
+            "cdl_shooting_star",
+            "cdl_engulfing",
+            "cdl_harami",
+            "cdl_marubozu",
+            "cdl_morning_star",
+            "cdl_evening_star",
+            "cdl_three_white_soldiers",
+            "cdl_three_black_crows",
+        ],
+        **kwargs,
+    )

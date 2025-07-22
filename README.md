@@ -61,9 +61,31 @@ pip install -r requirements.txt
 
 请参考 `examples/technical_indicators_example.py`，包含：
 - 如何获取币安ETHUSDT数据
-- 如何计算所有技术指标
+- 如何精确计算指定的技术指标
 - 如何自定义参数（如ma_periods、RSI等）
-- 如何获取所有可用指标和参数
+- 如何获取所有可用指标和参数信息
+
+### 基本使用
+
+```python
+from technical_index.index import build_quantitative_analysis
+
+# 计算指定指标
+df_with_indicators = build_quantitative_analysis(
+    df, 
+    ["rsi", "macd", "atr", "bbands"],
+    rsi_length=14,
+    macd_fast=12,
+    macd_slow=26,
+    atr_length=14,
+    bb_length=20
+)
+
+# 获取可用指标
+from technical_index.index import get_available_indicators, get_indicator_info
+indicators = get_available_indicators()
+rsi_info = get_indicator_info("rsi")
+```
 
 ## 开发相关
 

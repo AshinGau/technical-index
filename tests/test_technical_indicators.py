@@ -10,7 +10,6 @@ import numpy as np
 import pandas as pd
 
 from technical_index.index import (
-    build_indicator_parameters,
     build_quantitative_analysis,
     calculate_candlestick_patterns,
     calculate_momentum_indicators,
@@ -20,6 +19,7 @@ from technical_index.index import (
     calculate_volatility_indicators,
     calculate_volume_indicators,
     get_available_indicators,
+    get_indicator_info,
 )
 
 
@@ -74,19 +74,16 @@ class TestTechnicalIndicators(unittest.TestCase):
 
     def test_build_quantitative_analysis_basic(self):
         """测试基本技术指标计算"""
-        result = build_quantitative_analysis(self.df)
+        # 测试指定指标的计算
+        result = build_quantitative_analysis(self.df, ["rsi", "macd", "atr"])
 
         self.assertIsNotNone(result)
         self.assertGreaterEqual(len(result.columns), len(self.df.columns))
 
-        # 检查是否添加了技术指标（由于TA-Lib依赖，可能某些指标无法计算）
+        # 检查是否添加了技术指标
         original_columns = set(self.df.columns)
         new_columns = set(result.columns) - original_columns
-        # 如果由于依赖问题没有添加新列，至少确保结果不为空
-        if len(new_columns) == 0:
-            self.assertGreater(len(result), 0)
-        else:
-            self.assertGreater(len(new_columns), 0)
+        self.assertGreater(len(new_columns), 0)
 
     def test_build_quantitative_analysis_custom_params(self):
         """测试自定义参数的技术指标计算"""
@@ -98,7 +95,9 @@ class TestTechnicalIndicators(unittest.TestCase):
             "bb_length": 15,
             "bb_std": 2.5,
         }
-        result = build_quantitative_analysis(self.df, **custom_params)
+        result = build_quantitative_analysis(
+            self.df, ["rsi", "macd", "bbands", "sma"], **custom_params
+        )
         self.assertIsNotNone(result)
         # 检查自定义参数是否生效
         if "RSI_21" in result.columns:
@@ -197,12 +196,12 @@ class TestTechnicalIndicators(unittest.TestCase):
     def test_empty_dataframe(self):
         """测试空DataFrame的处理"""
         empty_df = pd.DataFrame()
-        result = build_quantitative_analysis(empty_df)
+        result = build_quantitative_analysis(empty_df, ["rsi"])
         self.assertIsNone(result)
 
     def test_none_dataframe(self):
         """测试None DataFrame的处理"""
-        result = build_quantitative_analysis(None)
+        result = build_quantitative_analysis(None, ["rsi"])
         self.assertIsNone(result)
 
     def test_missing_columns(self):
@@ -212,7 +211,7 @@ class TestTechnicalIndicators(unittest.TestCase):
 
         # 应该能够处理缺少Volume的情况（某些指标可能无法计算）
         try:
-            result = build_quantitative_analysis(df_missing)
+            result = build_quantitative_analysis(df_missing, ["rsi"])
             self.assertIsNotNone(result)
         except Exception as e:
             # 如果出现异常，应该是预期的（因为缺少必要列）
@@ -240,28 +239,30 @@ class TestTechnicalIndicators(unittest.TestCase):
             self.assertIsInstance(indicators[category], list)
             self.assertGreater(len(indicators[category]), 0)
 
-    def test_build_indicator_parameters(self):
-        """测试构建指标参数"""
-        # 测试默认参数
-        params = build_indicator_parameters()
+    def test_get_indicator_info(self):
+        """测试获取指标信息"""
+        # 测试RSI指标信息
+        rsi_info = get_indicator_info("rsi")
+        self.assertIsNotNone(rsi_info)
+        self.assertIn("name", rsi_info)
+        self.assertIn("function", rsi_info)
+        self.assertIn("parameters", rsi_info)
+        self.assertIn("description", rsi_info)
+        self.assertEqual(rsi_info["name"], "rsi")
 
-        self.assertIsInstance(params, dict)
-        self.assertGreater(len(params), 0)
+        # 测试MACD指标信息
+        macd_info = get_indicator_info("macd")
+        self.assertIsNotNone(macd_info)
+        self.assertIn("macd_fast", macd_info["parameters"])
+        self.assertIn("macd_slow", macd_info["parameters"])
 
-        # 检查一些关键参数
-        key_params = ["rsi_length", "macd_fast", "macd_slow", "bb_length", "atr_length"]
-        for param in key_params:
-            self.assertIn(param, params)
-            self.assertIsInstance(params[param], (int, float))
-
-        # 测试自定义参数
-        custom_params = build_indicator_parameters(ma_periods=(5, 13, 21), rsi_length=21)
-        self.assertEqual(custom_params["ma_periods"], (5, 13, 21))
-        self.assertEqual(custom_params["rsi_length"], 21)
+        # 测试未知指标
+        unknown_info = get_indicator_info("unknown_indicator")
+        self.assertIsNone(unknown_info)
 
     def test_indicator_values_range(self):
         """测试指标值范围是否合理"""
-        result = build_quantitative_analysis(self.df)
+        result = build_quantitative_analysis(self.df, ["rsi", "bbands"])
 
         # 检查RSI值是否在合理范围内
         if "RSI_14" in result.columns:
@@ -283,7 +284,7 @@ class TestTechnicalIndicators(unittest.TestCase):
         import time
 
         start_time = time.time()
-        build_quantitative_analysis(self.df)
+        build_quantitative_analysis(self.df, ["rsi", "macd", "atr", "bbands"])
         end_time = time.time()
 
         calculation_time = end_time - start_time

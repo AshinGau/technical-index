@@ -5,13 +5,11 @@
 
 import argparse
 import asyncio
-import json
 import logging
-import os
 import sys
 
 from .config import ConfigManager, load_rules_from_config
-from .constants import DEFAULT_CONFIG_FILE, DEFAULT_SIGNAL_FILE
+from .constants import DEFAULT_CONFIG_FILE
 from .monitor import PriceMonitor, RuleEngine
 
 # 配置日志
@@ -67,55 +65,6 @@ def show_config(config_file: str = DEFAULT_CONFIG_FILE) -> None:
 
     except Exception as e:
         logger.error(f"显示配置失败: {e}")
-        sys.exit(1)
-
-
-def show_signals(signal_file: str = DEFAULT_SIGNAL_FILE) -> None:
-    """显示历史信号"""
-    try:
-        if not os.path.exists(signal_file):
-            print(f"❌ 信号文件不存在: {signal_file}")
-            return
-
-        with open(signal_file, "r", encoding="utf-8") as f:
-            signals = json.load(f)
-
-        if not signals:
-            print("📭 暂无历史信号")
-            return
-
-        print("\n" + "=" * 80)
-        print("📈 历史信号记录")
-        print("=" * 80)
-
-        # 按时间倒序排列
-        sorted_signals = sorted(signals, key=lambda x: x.get("timestamp", ""), reverse=True)
-
-        for i, signal in enumerate(sorted_signals[:20], 1):  # 只显示最近20个信号
-            print(f"\n{i}. {signal.get('symbol', 'N/A')} - {signal.get('rule_name', 'N/A')}")
-            print(f"   时间: {signal.get('timestamp', 'N/A')}")
-            print(f"   信号类型: {signal.get('signal_type', 'N/A')}")
-            print(f"   当前价格: {signal.get('current_price', 'N/A')}")
-            print(f"   间隔: {signal.get('interval', 'N/A')}")
-            print(f"   置信度: {signal.get('confidence', 'N/A')}")
-
-            if signal.get("target_price"):
-                print(f"   目标价格: {signal.get('target_price')}")
-            if signal.get("stop_loss"):
-                print(f"   止损价格: {signal.get('stop_loss')}")
-            if signal.get("take_profit"):
-                print(f"   止盈价格: {signal.get('take_profit')}")
-
-            if signal.get("additional_signals"):
-                print(f"   额外信号: {', '.join(signal['additional_signals'])}")
-
-        if len(sorted_signals) > 20:
-            print(f"\n... 还有 {len(sorted_signals) - 20} 个信号未显示")
-
-        print("=" * 80)
-
-    except Exception as e:
-        logger.error(f"显示信号失败: {e}")
         sys.exit(1)
 
 
@@ -196,12 +145,6 @@ def main():
         "--config", default=DEFAULT_CONFIG_FILE, help=f"配置文件路径 (默认: {DEFAULT_CONFIG_FILE})"
     )
 
-    # signals 命令
-    signals_parser = subparsers.add_parser("signals", help="显示历史信号")
-    signals_parser.add_argument(
-        "--file", default=DEFAULT_SIGNAL_FILE, help=f"信号文件路径 (默认: {DEFAULT_SIGNAL_FILE})"
-    )
-
     args = parser.parse_args()
 
     if not args.command:
@@ -215,9 +158,6 @@ def main():
         elif args.command == "show":
             config_file = getattr(args, "config", DEFAULT_CONFIG_FILE)
             show_config(config_file)
-        elif args.command == "signals":
-            signal_file = getattr(args, "file", DEFAULT_SIGNAL_FILE)
-            show_signals(signal_file)
         else:
             parser.print_help()
 
