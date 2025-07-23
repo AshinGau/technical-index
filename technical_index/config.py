@@ -299,6 +299,12 @@ def _create_rule_instance(rule_def: RuleDefinition, symbol: str, interval: str) 
                     interval=interval,
                     **parameters,
                 )
+            elif rule_def.name == RuleNames.MOVING_AVERAGE:
+                return RuleFactory.create_moving_average_rule(
+                    symbol=symbol,
+                    interval=interval,
+                    **parameters,
+                )
             elif rule_def.name == RuleNames.RSI_SIGNAL:
                 return RuleFactory.create_rsi_rule(
                     symbol=symbol,

@@ -16,6 +16,7 @@ class RuleNames:
     PRICE_VOLATILITY = "price_volatility"
     PRICE_BREAKOUT = "price_breakout"
     MACD_GOLDEN_CROSS = "macd_golden_cross"
+    MOVING_AVERAGE = "moving_average"
     RSI_SIGNAL = "rsi_signal"
     TREND_ANALYSIS = "trend_analysis"
     NEW_HIGH_LOW = "new_high_low"
@@ -26,6 +27,7 @@ RULE_DESCRIPTIONS = {
     RuleNames.PRICE_VOLATILITY: "价格波动监控",
     RuleNames.PRICE_BREAKOUT: "价格突破监控",
     RuleNames.MACD_GOLDEN_CROSS: "MACD金叉死叉",
+    RuleNames.MOVING_AVERAGE: "均线策略",
     RuleNames.RSI_SIGNAL: "RSI超买超卖",
     RuleNames.TREND_ANALYSIS: "趋势分析",
     RuleNames.NEW_HIGH_LOW: "新高新低监控",

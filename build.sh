@@ -22,7 +22,7 @@ pip install -e ".[dev]"
 
 # Run tests
 echo "Running tests..."
-pytest
+pytest -W ignore::UserWarning
 
 # Format code
 echo "Formatting code..."

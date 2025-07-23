@@ -33,7 +33,7 @@
       "rule_type": "technical",
       "enabled": true,
       "parameters": {
-        "lookback_period": 4
+        "lookback_period": 3
       },
       "description": "MACD金叉死叉"
     },
@@ -43,6 +43,16 @@
       "enabled": true,
       "parameters": {},
       "description": "RSI超买超卖"
+    },
+    {
+      "name": "moving_average",
+      "rule_type": "technical",
+      "enabled": true,
+      "parameters": {
+        "ema_periods": [5, 10, 20, 50],
+        "lookback_period": 3
+      },
+      "description": "均线策略"
     }
   ],
   "symbols": [

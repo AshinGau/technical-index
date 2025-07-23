@@ -22,6 +22,7 @@ from .rules import (
     PriceBreakoutRule,
     NewHighLowRule,
     MACDGoldenCrossRule,
+    MovingAverageRule,
     RSISignalRule,
     TrendAnalysisRule,
     CustomRule,
@@ -334,6 +335,17 @@ class RuleFactory:
             parameters=parameters,
         )
         return MACDGoldenCrossRule(config)
+
+    @staticmethod
+    def create_moving_average_rule(symbol: str, interval: str, **parameters) -> MovingAverageRule:
+        config = RuleConfig(
+            name=RuleNames.MOVING_AVERAGE,
+            rule_type=RuleType.TECHNICAL_INDICATOR,
+            symbol=symbol,
+            interval=interval,
+            parameters=parameters,
+        )
+        return MovingAverageRule(config)
 
     @staticmethod
     def create_custom_rule(
