@@ -25,7 +25,7 @@ class PlotConfig:
 
     def __init__(self, **kwargs):
         # 要绘制的技术指标列表
-        self.indicators = kwargs.get("indicators", ["macd", "dmi", "mfi", "obv"])
+        self.indicators = kwargs.get("indicators", ["taker_buy"])
 
         # 移动平均线配置
         self.sma_periods = kwargs.get("sma_periods", None)  # 如果提供则绘制SMA
@@ -466,7 +466,7 @@ def plot_candlestick_with_indicators(df, config: Optional[PlotConfig] = None, **
             panel_index += 1
 
     # DMI 指标
-    if "dmi" in indicators_lower:
+    if "adx" in indicators_lower:
         adx_col = f"ADX_{config.adx_length}"
         dmp_col = f"DMP_{config.adx_length}"
         dmn_col = f"DMN_{config.adx_length}"
@@ -478,7 +478,7 @@ def plot_candlestick_with_indicators(df, config: Optional[PlotConfig] = None, **
                         df_plot[adx_col],
                         panel=panel_index,
                         color="purple",
-                        ylabel="DMI",
+                        ylabel="ADX/DMI",
                     ),
                     mpf.make_addplot(df_plot[dmp_col], panel=panel_index, color="green"),
                     mpf.make_addplot(df_plot[dmn_col], panel=panel_index, color="red"),
